@@ -1,0 +1,423 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Government-grade color system */
+  --gati-primary: #0A2463;
+  --gati-secondary: #1E5AA8;
+  --gati-accent: #00B4D8;
+  --gati-light: #90E0EF;
+  --gati-glow: #48CAE4;
+  --gati-white: #FAFBFC;
+  --gati-surface: #FFFFFF;
+  --gati-text: #1A1A2E;
+  --gati-muted: #6B7280;
+  
+  /* Semantic colors */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --critical: #DC2626;
+  
+  /* Grid background */
+  --grid-color: rgba(10, 36, 99, 0.03);
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--gati-white);
+  color: var(--gati-text);
+}
+
+/* Government-grade scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--gati-secondary), var(--gati-accent));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gati-primary);
+}
+
+/* Selection color */
+::selection {
+  background: rgba(0, 180, 216, 0.2);
+  color: var(--gati-primary);
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'IBM Plex Sans', 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+  }
+  
+  .font-display {
+    font-family: 'IBM Plex Sans', 'Inter', system-ui, sans-serif;
+  }
+  
+  .font-mono {
+    font-family: 'IBM Plex Mono', 'Consolas', monospace;
+  }
+}
+
+@layer components {
+  /* Government panel styling */
+  .gati-panel {
+    @apply bg-white rounded-xl border border-gray-100 shadow-panel;
+    @apply transition-all duration-300 ease-out;
+    @apply hover:shadow-panel-hover hover:border-gati-light/30;
+  }
+  
+  .gati-panel-glow {
+    @apply gati-panel;
+    box-shadow: 
+      0 2px 15px rgba(10, 36, 99, 0.08),
+      0 0 30px rgba(72, 202, 228, 0.1);
+  }
+  
+  /* Glass morphism panels */
+  .gati-glass {
+    @apply bg-white/80 backdrop-blur-md rounded-xl border border-white/50;
+    box-shadow: 
+      0 4px 20px rgba(10, 36, 99, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+  
+  /* Primary button */
+  .gati-btn-primary {
+    @apply px-6 py-3 rounded-lg font-medium text-white;
+    @apply transition-all duration-300 ease-out;
+    background: linear-gradient(135deg, var(--gati-primary), var(--gati-secondary));
+    box-shadow: 0 4px 15px rgba(10, 36, 99, 0.25);
+  }
+  
+  .gati-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(10, 36, 99, 0.35);
+  }
+  
+  .gati-btn-primary:active {
+    transform: translateY(0);
+  }
+  
+  /* Secondary button */
+  .gati-btn-secondary {
+    @apply px-6 py-3 rounded-lg font-medium;
+    @apply border-2 border-gati-accent text-gati-primary;
+    @apply transition-all duration-300 ease-out;
+    @apply hover:bg-gati-accent hover:text-white hover:border-gati-accent;
+  }
+  
+  /* Ghost button */
+  .gati-btn-ghost {
+    @apply px-4 py-2 rounded-lg font-medium text-gati-muted;
+    @apply transition-all duration-200 ease-out;
+    @apply hover:bg-gati-light/20 hover:text-gati-primary;
+  }
+  
+  /* Badge styles */
+  .gati-badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+    @apply transition-all duration-200;
+  }
+  
+  .gati-badge-success {
+    @apply gati-badge bg-emerald-50 text-emerald-700 border border-emerald-200;
+  }
+  
+  .gati-badge-warning {
+    @apply gati-badge bg-amber-50 text-amber-700 border border-amber-200;
+  }
+  
+  .gati-badge-danger {
+    @apply gati-badge bg-red-50 text-red-700 border border-red-200;
+  }
+  
+  .gati-badge-critical {
+    @apply gati-badge bg-purple-50 text-purple-700 border border-purple-200;
+  }
+  
+  .gati-badge-info {
+    @apply gati-badge bg-cyan-50 text-cyan-700 border border-cyan-200;
+  }
+  
+  /* Stat card */
+  .gati-stat-card {
+    @apply gati-panel p-6;
+    @apply relative overflow-hidden;
+  }
+  
+  .gati-stat-card::before {
+    content: '';
+    @apply absolute inset-0 opacity-0;
+    background: radial-gradient(circle at top right, rgba(72, 202, 228, 0.1), transparent 70%);
+    transition: opacity 0.3s ease;
+  }
+  
+  .gati-stat-card:hover::before {
+    @apply opacity-100;
+  }
+  
+  /* Navigation item */
+  .gati-nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg;
+    @apply text-gati-muted font-medium;
+    @apply transition-all duration-200 ease-out;
+    @apply hover:bg-gati-light/20 hover:text-gati-primary;
+  }
+  
+  .gati-nav-item.active {
+    @apply bg-gradient-to-r from-gati-primary to-gati-secondary text-white;
+    box-shadow: 0 4px 15px rgba(10, 36, 99, 0.2);
+  }
+  
+  /* Input fields */
+  .gati-input {
+    @apply w-full px-4 py-3 rounded-lg border border-gray-200;
+    @apply bg-white text-gati-text placeholder-gati-muted;
+    @apply transition-all duration-200 ease-out;
+    @apply focus:outline-none focus:border-gati-accent focus:ring-2 focus:ring-gati-accent/20;
+  }
+  
+  /* Select dropdown */
+  .gati-select {
+    @apply gati-input appearance-none cursor-pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 20px;
+    padding-right: 40px;
+  }
+  
+  /* Table styling */
+  .gati-table {
+    @apply w-full;
+  }
+  
+  .gati-table thead {
+    @apply bg-gray-50;
+  }
+  
+  .gati-table th {
+    @apply px-4 py-3 text-left text-xs font-semibold text-gati-muted uppercase tracking-wider;
+  }
+  
+  .gati-table td {
+    @apply px-4 py-4 text-sm text-gati-text border-b border-gray-100;
+  }
+  
+  .gati-table tbody tr {
+    @apply transition-colors duration-150;
+    @apply hover:bg-gati-light/10;
+  }
+  
+  /* Tooltip */
+  .gati-tooltip {
+    @apply absolute z-50 px-3 py-2 text-sm text-white rounded-lg;
+    @apply bg-gati-primary shadow-lg;
+    @apply opacity-0 invisible transition-all duration-200;
+  }
+  
+  .gati-tooltip-trigger:hover .gati-tooltip {
+    @apply opacity-100 visible;
+  }
+}
+
+@layer utilities {
+  /* Text gradient */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, var(--gati-primary), var(--gati-accent));
+  }
+  
+  .text-gradient-light {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, var(--gati-secondary), var(--gati-light));
+  }
+  
+  /* Animated background grid */
+  .bg-grid {
+    background-image: 
+      linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  
+  .bg-grid-animated {
+    background-image: 
+      linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridFlow 20s linear infinite;
+  }
+  
+  /* Glow effects */
+  .glow-cyan {
+    box-shadow: 0 0 30px rgba(72, 202, 228, 0.4);
+  }
+  
+  .glow-text {
+    text-shadow: 0 0 20px rgba(72, 202, 228, 0.5);
+  }
+  
+  /* Pulse dot */
+  .pulse-dot {
+    @apply relative;
+  }
+  
+  .pulse-dot::after {
+    content: '';
+    @apply absolute w-2 h-2 bg-gati-accent rounded-full;
+    animation: pulse 2s infinite;
+  }
+  
+  /* Smooth number animation */
+  .animate-number {
+    animation: countUp 2s ease-out forwards;
+  }
+  
+  /* Map node styling */
+  .map-node {
+    @apply absolute w-3 h-3 rounded-full bg-gati-accent;
+    animation: pulse 3s infinite;
+  }
+  
+  .map-node-critical {
+    @apply bg-red-500;
+  }
+  
+  .map-node-warning {
+    @apply bg-amber-500;
+  }
+  
+  /* Status indicators */
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+  
+  .status-active {
+    @apply bg-emerald-500;
+    animation: pulse 2s infinite;
+  }
+  
+  .status-pending {
+    @apply bg-amber-500;
+  }
+  
+  .status-inactive {
+    @apply bg-gray-400;
+  }
+  
+  /* Shimmer loading effect */
+  .shimmer {
+    @apply relative overflow-hidden;
+  }
+  
+  .shimmer::after {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    animation: shimmer 2s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+}
+
+/* India map specific styles */
+.india-map-container {
+  @apply relative w-full h-full;
+  background: radial-gradient(ellipse at center, rgba(72, 202, 228, 0.08) 0%, transparent 70%);
+}
+
+.india-map-glow {
+  filter: drop-shadow(0 0 20px rgba(72, 202, 228, 0.3));
+}
+
+/* Chart customizations */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: rgba(10, 36, 99, 0.05);
+}
+
+.recharts-tooltip-wrapper {
+  @apply !rounded-lg !shadow-lg;
+}
+
+/* Custom scrollbar for panels */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(10, 36, 99, 0.2);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(10, 36, 99, 0.4);
+}
+
+/* Page transition animations */
+.page-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms ease-out, transform 300ms ease-out;
+}
+
+.page-exit {
+  opacity: 1;
+}
+
+.page-exit-active {
+  opacity: 0;
+  transition: opacity 200ms ease-in;
+}
+
+/* Disable motion for reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
