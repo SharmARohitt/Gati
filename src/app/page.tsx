@@ -59,17 +59,20 @@ export default function LandingPage() {
           </div>
           
           <div className="hidden md:flex items-center gap-8">
+            <Link href="/admin" className="text-sm font-medium text-gati-muted hover:text-gati-primary transition-colors">
+              Dashboard
+            </Link>
+            <Link href="/analytics" className="text-sm font-medium text-gati-muted hover:text-gati-primary transition-colors">
+              Analytics & Reports
+            </Link>
             <Link href="/digital-twin" className="text-sm font-medium text-gati-muted hover:text-gati-primary transition-colors">
-              Digital Twin
+              India Digital Twin
             </Link>
             <Link href="/intelligence" className="text-sm font-medium text-gati-muted hover:text-gati-primary transition-colors">
               AI Intelligence
             </Link>
-            <Link href="/analytics" className="text-sm font-medium text-gati-muted hover:text-gati-primary transition-colors">
-              Analytics
-            </Link>
             <Link href="/admin" className="gati-btn-primary text-sm">
-              Enter Admin Console
+              Enter Console
             </Link>
           </div>
         </div>
@@ -153,7 +156,7 @@ export default function LandingPage() {
               transition={{ duration: 0.8, delay: 0.3 }}
             >
               <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl border border-gray-100">
-                <IndiaMap mode="risk" interactive={false} showLabels={false} />
+                <IndiaMap mode="political" interactive={true} showLabels={true} />
               </div>
               
               {/* Floating stat cards */}

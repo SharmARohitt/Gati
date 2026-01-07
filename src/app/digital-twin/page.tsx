@@ -29,7 +29,7 @@ import {
 import { stateData, timelineData } from '@/lib/data'
 import { formatIndianNumber } from '@/lib/utils'
 
-type MapMode = 'health' | 'saturation' | 'freshness' | 'risk'
+type MapMode = 'health' | 'saturation' | 'freshness' | 'risk' | 'political'
 
 export default function DigitalTwinPage() {
   const [mapMode, setMapMode] = useState<MapMode>('health')
@@ -42,6 +42,7 @@ export default function DigitalTwinPage() {
     { id: 'saturation', label: 'Enrolment Saturation', icon: Users, color: 'text-cyan-500' },
     { id: 'freshness', label: 'Update Freshness', icon: RefreshCw, color: 'text-blue-500' },
     { id: 'risk', label: 'Risk Prediction', icon: AlertTriangle, color: 'text-amber-500' },
+    { id: 'political', label: 'Political View', icon: Layers, color: 'text-purple-500' },
   ]
 
   const handleStateClick = (stateId: string) => {

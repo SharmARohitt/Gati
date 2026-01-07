@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
-import { motion } from 'framer-motion'
+import React, { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { 
   ArrowLeft,
@@ -19,7 +19,19 @@ import {
   Cpu,
   Database,
   GitBranch,
-  CheckCircle
+  CheckCircle,
+  Play,
+  Loader2,
+  Sparkles,
+  MessageSquare,
+  Send,
+  RefreshCw,
+  MapPin,
+  AlertCircle,
+  ArrowUpRight,
+  Eye,
+  FileText,
+  Download
 } from 'lucide-react'
 import { 
   AnimatedGrid,
@@ -28,8 +40,140 @@ import {
   Footer
 } from '@/components/ui'
 
+// AI Response types
+interface AIInsight {
+  id: string
+  type: 'prediction' | 'anomaly' | 'recommendation' | 'alert'
+  title: string
+  content: string
+  confidence: number
+  timestamp: Date
+  region?: string
+  severity?: 'low' | 'medium' | 'high' | 'critical'
+}
+
+// Simulated AI responses
+const generateAIInsight = (type: string): AIInsight => {
+  const insights: Record<string, AIInsight[]> = {
+    forecasting: [
+      { id: '1', type: 'prediction', title: 'Enrolment Surge Predicted', content: 'Bihar is expected to see a 23% increase in new enrolments over the next 3 months due to government drive. Recommend increasing enrolment center capacity by 15%.', confidence: 94.2, timestamp: new Date(), region: 'Bihar', severity: 'medium' },
+      { id: '2', type: 'prediction', title: 'Update Volume Forecast', content: 'Maharashtra will experience peak update requests during March-April. Projected volume: 2.4M updates. Current capacity can handle 1.8M. Action needed.', confidence: 91.8, timestamp: new Date(), region: 'Maharashtra', severity: 'high' },
+      { id: '3', type: 'recommendation', title: 'Resource Optimization', content: 'Based on seasonal patterns, suggest redistributing 12 mobile enrolment units from Tamil Nadu to Jharkhand for Q2 2026.', confidence: 88.5, timestamp: new Date(), severity: 'low' },
+    ],
+    anomaly: [
+      { id: '4', type: 'anomaly', title: 'Unusual Update Pattern Detected', content: 'District Muzaffarpur showing 340% spike in address updates over 72 hours. Pattern inconsistent with historical data. Recommend field verification.', confidence: 97.2, timestamp: new Date(), region: 'Bihar - Muzaffarpur', severity: 'critical' },
+      { id: '5', type: 'alert', title: 'Biometric Quality Drop', content: 'Fingerprint rejection rate in Kerala increased from 2.1% to 8.7% in last 48 hours. Possible device calibration issue at 3 centers.', confidence: 95.6, timestamp: new Date(), region: 'Kerala', severity: 'high' },
+      { id: '6', type: 'anomaly', title: 'Timing Anomaly', content: '847 updates processed between 2-4 AM in Lucknow cluster. This is outside normal operating hours. Flagged for audit review.', confidence: 99.1, timestamp: new Date(), region: 'Uttar Pradesh - Lucknow', severity: 'medium' },
+    ],
+    mobility: [
+      { id: '7', type: 'prediction', title: 'Migration Corridor Identified', content: 'AI detected significant migration pattern: Rural Odisha → Urban Maharashtra. 45,000+ address updates indicate workforce movement. Peak in Oct-Nov.', confidence: 89.3, timestamp: new Date(), region: 'Odisha → Maharashtra', severity: 'low' },
+      { id: '8', type: 'recommendation', title: 'Service Point Optimization', content: 'Based on mobility patterns, recommend opening 3 new Aadhaar Seva Kendras in Pune industrial belt to serve migrant population.', confidence: 86.7, timestamp: new Date(), region: 'Pune, Maharashtra', severity: 'medium' },
+      { id: '9', type: 'prediction', title: 'Reverse Migration Alert', content: 'Post-harvest season showing 18% increase in return migration to Bihar from Delhi NCR. Update centers in Patna may need reinforcement.', confidence: 92.4, timestamp: new Date(), region: 'Delhi → Bihar', severity: 'low' },
+    ],
+    lifecycle: [
+      { id: '10', type: 'alert', title: 'Mandatory Update Due', content: '2.3 million children in UP will reach age 5 in next 6 months requiring mandatory biometric update. Current capacity: 1.1M. Gap: 1.2M.', confidence: 98.4, timestamp: new Date(), region: 'Uttar Pradesh', severity: 'critical' },
+      { id: '11', type: 'prediction', title: 'Age Transition Wave', content: 'Predicted 890,000 children reaching age 15 in Tamil Nadu Q3 2026. Mandatory biometric update required. Suggest pre-emptive outreach campaign.', confidence: 96.1, timestamp: new Date(), region: 'Tamil Nadu', severity: 'high' },
+      { id: '12', type: 'recommendation', title: 'Proactive Outreach', content: 'AI recommends SMS campaign to 1.4M parents in Gujarat for upcoming child biometric updates. Estimated compliance improvement: +34%.', confidence: 87.9, timestamp: new Date(), region: 'Gujarat', severity: 'medium' },
+    ]
+  }
+  return insights[type]?.[Math.floor(Math.random() * 3)] || insights.forecasting[0]
+}
+
+// Chat message type
+interface ChatMessage {
+  id: string
+  role: 'user' | 'ai'
+  content: string
+  timestamp: Date
+  isTyping?: boolean
+}
+
 export default function IntelligencePage() {
   const [selectedCapability, setSelectedCapability] = useState<string | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [activeInsights, setActiveInsights] = useState<AIInsight[]>([])
+  const [liveStats, setLiveStats] = useState({
+    predictions: 12847,
+    accuracy: 94.2,
+    responseTime: 47,
+    activeModels: 4
+  })
+  
+  // AI Chat state
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    { id: '0', role: 'ai', content: 'Hello! I am GATI AI Assistant. I can help you analyze Aadhaar data patterns, predict trends, and provide governance insights. What would you like to know?', timestamp: new Date() }
+  ])
+  const [chatInput, setChatInput] = useState('')
+  const [isAITyping, setIsAITyping] = useState(false)
+
+  // Simulate live stats updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLiveStats(prev => ({
+        ...prev,
+        predictions: prev.predictions + Math.floor(Math.random() * 5),
+        responseTime: 40 + Math.floor(Math.random() * 20)
+      }))
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Run AI Analysis
+  const runAIAnalysis = useCallback((capabilityId: string) => {
+    setIsProcessing(true)
+    setSelectedCapability(capabilityId)
+    
+    // Simulate AI processing
+    setTimeout(() => {
+      const insight = generateAIInsight(capabilityId)
+      setActiveInsights(prev => [insight, ...prev.slice(0, 4)])
+      setIsProcessing(false)
+      setLiveStats(prev => ({ ...prev, predictions: prev.predictions + 1 }))
+    }, 1500 + Math.random() * 1000)
+  }, [])
+
+  // Handle chat submit
+  const handleChatSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault()
+    if (!chatInput.trim() || isAITyping) return
+
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: chatInput,
+      timestamp: new Date()
+    }
+    setChatMessages(prev => [...prev, userMessage])
+    setChatInput('')
+    setIsAITyping(true)
+
+    // Simulate AI response
+    setTimeout(() => {
+      const aiResponses: Record<string, string> = {
+        'coverage': 'Based on current data, national Aadhaar coverage stands at 97.2%. The lowest coverage is in Meghalaya (89.3%) and highest in Kerala (99.6%). I recommend focusing field operations on northeastern states for maximum impact.',
+        'risk': 'Current high-risk regions identified: Bihar (critical - 23 districts), Jharkhand (high - 12 districts), and Assam (high - 8 districts). Primary concerns include data freshness below 80% and pending mandatory updates exceeding capacity.',
+        'prediction': 'Q2 2026 forecast: Expected 28.5M total updates nationally. Peak months: March-April due to financial year-end documentation requirements. Recommend 15% capacity increase in urban centers.',
+        'anomaly': 'In the last 24 hours, I detected 3 significant anomalies: 1) Unusual spike in Muzaffarpur district, 2) After-hours processing in Lucknow, 3) Biometric rejection rate increase in Kerala. All flagged for review.',
+        'default': `I've analyzed your query about "${chatInput}". Based on aggregated Aadhaar data patterns:\n\n• Current system health: 98.7% operational\n• Active monitoring across 36 states/UTs\n• 12,847 predictions generated today\n• Average confidence score: 94.2%\n\nWould you like me to dive deeper into any specific region or metric?`
+      }
+      
+      const keywords = chatInput.toLowerCase()
+      let response = aiResponses.default
+      if (keywords.includes('coverage')) response = aiResponses.coverage
+      else if (keywords.includes('risk')) response = aiResponses.risk
+      else if (keywords.includes('predict') || keywords.includes('forecast')) response = aiResponses.prediction
+      else if (keywords.includes('anomal') || keywords.includes('unusual')) response = aiResponses.anomaly
+
+      const aiMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'ai',
+        content: response,
+        timestamp: new Date()
+      }
+      setChatMessages(prev => [...prev, aiMessage])
+      setIsAITyping(false)
+    }, 1500 + Math.random() * 1000)
+  }, [chatInput, isAITyping])
 
   const mlCapabilities = [
     {
@@ -37,6 +181,7 @@ export default function IntelligencePage() {
       title: 'Trend Forecasting',
       icon: TrendingUp,
       color: 'from-emerald-400 to-emerald-600',
+      bgColor: 'bg-emerald-50',
       description: 'Predict enrolment and update patterns for the next 6-12 months',
       metrics: [
         { label: 'Accuracy', value: 94.2 },
@@ -49,6 +194,7 @@ export default function IntelligencePage() {
       title: 'Anomaly Detection',
       icon: AlertTriangle,
       color: 'from-amber-400 to-amber-600',
+      bgColor: 'bg-amber-50',
       description: 'Identify unnatural spikes, gaps, and inconsistencies in real-time',
       metrics: [
         { label: 'Detection Rate', value: 97.8 },
@@ -61,6 +207,7 @@ export default function IntelligencePage() {
       title: 'Mobility & Migration Signals',
       icon: Users,
       color: 'from-blue-400 to-blue-600',
+      bgColor: 'bg-blue-50',
       description: 'Detect population movement patterns from aggregated address updates',
       metrics: [
         { label: 'Pattern Recognition', value: 91.3 },
@@ -73,6 +220,7 @@ export default function IntelligencePage() {
       title: 'Lifecycle Intelligence',
       icon: Clock,
       color: 'from-purple-400 to-purple-600',
+      bgColor: 'bg-purple-50',
       description: 'Track and predict biometric transition requirements',
       metrics: [
         { label: 'Transition Prediction', value: 92.6 },
@@ -90,6 +238,24 @@ export default function IntelligencePage() {
     { id: 5, title: 'ML Processing', icon: Brain, status: 'active' },
     { id: 6, title: 'Insight Generation', icon: Zap, status: 'active' },
   ]
+
+  const getSeverityColor = (severity?: string) => {
+    switch (severity) {
+      case 'critical': return 'bg-red-100 text-red-700 border-red-200'
+      case 'high': return 'bg-orange-100 text-orange-700 border-orange-200'
+      case 'medium': return 'bg-amber-100 text-amber-700 border-amber-200'
+      default: return 'bg-emerald-100 text-emerald-700 border-emerald-200'
+    }
+  }
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'prediction': return TrendingUp
+      case 'anomaly': return AlertTriangle
+      case 'alert': return AlertCircle
+      default: return Sparkles
+    }
+  }
 
   return (
     <main className="min-h-screen bg-gati-white">
@@ -111,14 +277,20 @@ export default function IntelligencePage() {
             </div>
           </div>
           
-          <Link href="/admin" className="gati-btn-primary text-sm">
-            Admin Console
-          </Link>
+          <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              <span className="text-xs font-medium text-emerald-700">AI Online</span>
+            </div>
+            <Link href="/admin" className="gati-btn-primary text-sm">
+              Admin Console
+            </Link>
+          </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-16 relative overflow-hidden">
+      <section className="pt-32 pb-12 relative overflow-hidden">
         <AnimatedGrid />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.1)_0%,transparent_60%)]" />
         
@@ -138,13 +310,85 @@ export default function IntelligencePage() {
               <span className="text-gradient">Governance Brain</span>
             </h1>
             
-            <p className="text-xl text-gati-muted leading-relaxed">
+            <p className="text-xl text-gati-muted leading-relaxed mb-8">
               Advanced machine learning models that analyze patterns, predict trends, 
               and generate actionable insights for proactive governance.
             </p>
+
+            {/* Quick Action Buttons */}
+            <div className="flex flex-wrap justify-center gap-4">
+              <button
+                onClick={() => runAIAnalysis('anomaly')}
+                className="gati-btn-primary inline-flex items-center gap-2"
+                disabled={isProcessing}
+              >
+                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                Run Anomaly Scan
+              </button>
+              <button
+                onClick={() => runAIAnalysis('forecasting')}
+                className="gati-btn-secondary inline-flex items-center gap-2"
+                disabled={isProcessing}
+              >
+                <TrendingUp className="w-4 h-4" />
+                Generate Forecast
+              </button>
+            </div>
           </motion.div>
         </div>
       </section>
+
+      {/* Live AI Insights Panel */}
+      <AnimatePresence>
+        {activeInsights.length > 0 && (
+          <motion.section 
+            className="py-6 bg-gradient-to-r from-purple-900 via-gati-primary to-purple-900"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+          >
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Sparkles className="w-5 h-5 text-purple-300" />
+                <span className="text-white font-semibold">Live AI Insights</span>
+                <span className="text-purple-300 text-sm">({activeInsights.length} generated)</span>
+              </div>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {activeInsights.slice(0, 3).map((insight, index) => {
+                  const TypeIcon = getTypeIcon(insight.type)
+                  return (
+                    <motion.div
+                      key={insight.id}
+                      className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <TypeIcon className="w-4 h-4 text-purple-300" />
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getSeverityColor(insight.severity)}`}>
+                            {insight.severity || 'info'}
+                          </span>
+                        </div>
+                        <span className="text-xs text-purple-300">{insight.confidence}% conf.</span>
+                      </div>
+                      <h4 className="text-white font-semibold mb-1">{insight.title}</h4>
+                      <p className="text-purple-200 text-sm line-clamp-2">{insight.content}</p>
+                      {insight.region && (
+                        <div className="flex items-center gap-1 mt-2 text-xs text-purple-300">
+                          <MapPin className="w-3 h-3" />
+                          {insight.region}
+                        </div>
+                      )}
+                    </motion.div>
+                  )
+                })}
+              </div>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
 
       {/* ML Pipeline Visualization */}
       <section className="py-16 bg-white">
@@ -204,7 +448,7 @@ export default function IntelligencePage() {
         </div>
       </section>
 
-      {/* ML Capabilities */}
+      {/* ML Capabilities - Interactive */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div 
@@ -217,7 +461,7 @@ export default function IntelligencePage() {
               Machine Learning Capabilities
             </h2>
             <p className="text-gati-muted max-w-2xl mx-auto">
-              Four specialized AI modules working together to provide comprehensive intelligence
+              Click any capability to run live AI analysis and see insights in action
             </p>
           </motion.div>
           
@@ -225,20 +469,40 @@ export default function IntelligencePage() {
             {mlCapabilities.map((capability, index) => {
               const Icon = capability.icon
               const isSelected = selectedCapability === capability.id
+              const isRunning = isProcessing && isSelected
               
               return (
                 <motion.div
                   key={capability.id}
                   className={`
-                    gati-panel p-6 cursor-pointer transition-all duration-300
-                    ${isSelected ? 'ring-2 ring-gati-accent shadow-glow' : ''}
+                    gati-panel p-6 cursor-pointer transition-all duration-300 relative overflow-hidden
+                    ${isSelected ? 'ring-2 ring-gati-accent shadow-glow' : 'hover:shadow-lg'}
                   `}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  onClick={() => setSelectedCapability(isSelected ? null : capability.id)}
+                  onClick={() => !isProcessing && runAIAnalysis(capability.id)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
+                  {/* Processing overlay */}
+                  <AnimatePresence>
+                    {isRunning && (
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-gati-accent/20 to-purple-500/20 flex items-center justify-center z-10"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        <div className="flex items-center gap-3 bg-white rounded-full px-6 py-3 shadow-lg">
+                          <Loader2 className="w-5 h-5 text-purple-600 animate-spin" />
+                          <span className="font-medium text-purple-700">AI Processing...</span>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   <div className="flex items-start gap-4 mb-4">
                     <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${capability.color} flex items-center justify-center shadow-md`}>
                       <Icon className="w-7 h-7 text-white" />
@@ -247,7 +511,13 @@ export default function IntelligencePage() {
                       <h3 className="text-xl font-semibold text-gati-text mb-1">{capability.title}</h3>
                       <p className="text-sm text-gati-muted">{capability.description}</p>
                     </div>
-                    <ChevronRight className={`w-5 h-5 text-gati-muted transition-transform ${isSelected ? 'rotate-90' : ''}`} />
+                    <div className={`p-2 rounded-lg ${capability.bgColor} transition-colors`}>
+                      {isRunning ? (
+                        <Loader2 className="w-5 h-5 text-purple-600 animate-spin" />
+                      ) : (
+                        <Play className="w-5 h-5 text-gati-secondary" />
+                      )}
+                    </div>
                   </div>
                   
                   {/* Metrics */}
@@ -270,9 +540,13 @@ export default function IntelligencePage() {
                     className="overflow-hidden"
                   >
                     <div className="pt-4 border-t border-gray-100">
-                      <p className="text-sm text-gati-muted leading-relaxed">
+                      <p className="text-sm text-gati-muted leading-relaxed mb-3">
                         {capability.details}
                       </p>
+                      <div className="flex items-center gap-2 text-xs text-gati-accent font-medium">
+                        <CheckCircle className="w-4 h-4" />
+                        Click to run analysis
+                      </div>
                     </div>
                   </motion.div>
                 </motion.div>
@@ -282,7 +556,7 @@ export default function IntelligencePage() {
         </div>
       </section>
 
-      {/* Model Performance Dashboard */}
+      {/* Model Performance Dashboard - Live */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div 
@@ -299,7 +573,7 @@ export default function IntelligencePage() {
             </p>
           </motion.div>
           
-          <div className="grid md:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-4 gap-6 mb-12">
             <motion.div 
               className="gati-panel-glow p-6"
               initial={{ opacity: 0, y: 20 }}
@@ -325,8 +599,8 @@ export default function IntelligencePage() {
                 <Target className="w-5 h-5 text-blue-500" />
                 <span className="text-sm font-medium text-gati-muted">Prediction Accuracy</span>
               </div>
-              <div className="text-3xl font-bold text-gati-text mb-2">94.2%</div>
-              <ConfidenceMeter confidence={94.2} />
+              <div className="text-3xl font-bold text-gati-text mb-2">{liveStats.accuracy}%</div>
+              <ConfidenceMeter confidence={liveStats.accuracy} />
             </motion.div>
             
             <motion.div 
@@ -338,10 +612,17 @@ export default function IntelligencePage() {
             >
               <div className="flex items-center gap-3 mb-4">
                 <BarChart2 className="w-5 h-5 text-purple-500" />
-                <span className="text-sm font-medium text-gati-muted">Daily Predictions</span>
+                <span className="text-sm font-medium text-gati-muted">Total Predictions</span>
               </div>
-              <div className="text-3xl font-bold text-gati-text mb-2">12.4K</div>
-              <span className="text-xs text-gati-muted">Last 24 hours</span>
+              <motion.div 
+                className="text-3xl font-bold text-gati-text mb-2"
+                key={liveStats.predictions}
+                initial={{ scale: 1.1 }}
+                animate={{ scale: 1 }}
+              >
+                {liveStats.predictions.toLocaleString()}
+              </motion.div>
+              <span className="text-xs text-gati-muted">Updated live</span>
             </motion.div>
             
             <motion.div 
@@ -355,10 +636,114 @@ export default function IntelligencePage() {
                 <Zap className="w-5 h-5 text-amber-500" />
                 <span className="text-sm font-medium text-gati-muted">Avg Response Time</span>
               </div>
-              <div className="text-3xl font-bold text-gati-text mb-2">47ms</div>
+              <div className="text-3xl font-bold text-gati-text mb-2">{liveStats.responseTime}ms</div>
               <span className="text-xs text-gati-muted">Real-time processing</span>
             </motion.div>
           </div>
+
+          {/* AI Chat Interface */}
+          <motion.div
+            className="gati-panel overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <div className="bg-gradient-to-r from-purple-600 to-gati-primary p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white">GATI AI Assistant</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                    <span className="text-xs text-purple-200">Online • Ask anything about Aadhaar data</span>
+                  </div>
+                </div>
+              </div>
+              <button 
+                onClick={() => setChatMessages([{ id: '0', role: 'ai', content: 'Hello! I am GATI AI Assistant. I can help you analyze Aadhaar data patterns, predict trends, and provide governance insights. What would you like to know?', timestamp: new Date() }])}
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <RefreshCw className="w-4 h-4 text-white" />
+              </button>
+            </div>
+
+            {/* Chat Messages */}
+            <div className="h-80 overflow-y-auto p-4 space-y-4 bg-gray-50">
+              {chatMessages.map((message) => (
+                <motion.div
+                  key={message.id}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <div className={`max-w-[80%] rounded-2xl p-4 ${
+                    message.role === 'user' 
+                      ? 'bg-gati-primary text-white rounded-br-md' 
+                      : 'bg-white shadow-md border border-gray-100 rounded-bl-md'
+                  }`}>
+                    {message.role === 'ai' && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <Brain className="w-4 h-4 text-purple-600" />
+                        <span className="text-xs font-medium text-purple-600">GATI AI</span>
+                      </div>
+                    )}
+                    <p className={`text-sm whitespace-pre-line ${message.role === 'user' ? 'text-white' : 'text-gati-text'}`}>
+                      {message.content}
+                    </p>
+                    <span className={`text-xs mt-2 block ${message.role === 'user' ? 'text-white/70' : 'text-gati-muted'}`}>
+                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                </motion.div>
+              ))}
+              {isAITyping && (
+                <motion.div 
+                  className="flex justify-start"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <div className="bg-white shadow-md border border-gray-100 rounded-2xl rounded-bl-md p-4">
+                    <div className="flex items-center gap-2">
+                      <Brain className="w-4 h-4 text-purple-600" />
+                      <span className="text-xs font-medium text-purple-600">GATI AI</span>
+                    </div>
+                    <div className="flex items-center gap-1 mt-2">
+                      <motion.span className="w-2 h-2 bg-purple-400 rounded-full" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity }} />
+                      <motion.span className="w-2 h-2 bg-purple-400 rounded-full" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: 0.2 }} />
+                      <motion.span className="w-2 h-2 bg-purple-400 rounded-full" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: 0.4 }} />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Chat Input */}
+            <form onSubmit={handleChatSubmit} className="p-4 border-t border-gray-100 bg-white">
+              <div className="flex items-center gap-3">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Ask about coverage, risks, predictions, anomalies..."
+                  className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-gati-accent focus:ring-2 focus:ring-gati-accent/20 outline-none text-sm"
+                  disabled={isAITyping}
+                />
+                <button
+                  type="submit"
+                  disabled={!chatInput.trim() || isAITyping}
+                  className="p-3 bg-gati-primary text-white rounded-xl hover:bg-gati-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Send className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex items-center gap-2 mt-2 text-xs text-gati-muted">
+                <Sparkles className="w-3 h-3" />
+                Try: "What are the high-risk regions?" or "Predict next quarter's updates"
+              </div>
+            </form>
+          </motion.div>
         </div>
       </section>
 

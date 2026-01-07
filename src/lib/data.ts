@@ -1,4 +1,17 @@
-// Mock data for GATI Platform - Demo purposes only
+// GATI Platform Data Module
+// This file exports CLIENT-SAFE data only (no fs/path dependencies)
+// For server-side data loading, API routes should import from '@/lib/data/server' directly
+
+// Re-export types (client-safe)
+export * from './data/types';
+
+// NOTE: Server-side utilities (getDataStore, calculateGrowthRates) should be 
+// imported directly in API routes from '@/lib/data/server' to avoid 
+// webpack errors in client components
+
+// ============================================
+// MOCK DATA FOR DEMO/FALLBACK
+// ============================================
 
 // State-wise Aadhaar data
 export const stateData = [

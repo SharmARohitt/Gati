@@ -1,43 +1,283 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ZoomIn, ZoomOut, RotateCcw, Layers, Info } from 'lucide-react'
+import { X, ZoomIn, ZoomOut, RotateCcw, Layers, MapPin, TrendingUp, Users, AlertTriangle } from 'lucide-react'
 import { stateData } from '@/lib/data'
-import { StateCoverageCard } from './StatCards'
 import { formatIndianNumber } from '@/lib/utils'
 
-// India states path data (simplified SVG paths for each state)
+// Detailed India states SVG path data - accurate geographic representation
 const indiaStatesData = [
-  { id: 'JK', name: 'Jammu & Kashmir', path: 'M180,20 L220,30 L240,60 L220,90 L180,85 L160,50 Z', cx: 195, cy: 55 },
-  { id: 'HP', name: 'Himachal Pradesh', path: 'M210,85 L240,80 L250,100 L230,115 L200,105 Z', cx: 225, cy: 97 },
-  { id: 'PB', name: 'Punjab', path: 'M175,95 L200,90 L210,115 L190,130 L165,120 Z', cx: 187, cy: 110 },
-  { id: 'UK', name: 'Uttarakhand', path: 'M235,100 L270,95 L280,120 L260,140 L230,125 Z', cx: 255, cy: 115 },
-  { id: 'HR', name: 'Haryana', path: 'M185,125 L215,120 L225,145 L200,160 L175,150 Z', cx: 200, cy: 140 },
-  { id: 'DL', name: 'Delhi', path: 'M205,145 L215,143 L218,155 L208,158 Z', cx: 211, cy: 150 },
-  { id: 'RJ', name: 'Rajasthan', path: 'M120,145 L185,140 L200,180 L180,250 L100,230 L90,180 Z', cx: 145, cy: 195 },
-  { id: 'UP', name: 'Uttar Pradesh', path: 'M210,145 L290,130 L340,180 L310,230 L240,240 L200,200 Z', cx: 265, cy: 185 },
-  { id: 'BR', name: 'Bihar', path: 'M330,195 L380,185 L400,210 L385,240 L340,245 L320,220 Z', cx: 360, cy: 215 },
-  { id: 'SK', name: 'Sikkim', path: 'M395,170 L415,165 L420,185 L405,195 L390,185 Z', cx: 405, cy: 178 },
-  { id: 'AS', name: 'Assam', path: 'M420,185 L500,170 L510,200 L490,220 L420,225 L410,200 Z', cx: 460, cy: 198 },
-  { id: 'WB', name: 'West Bengal', path: 'M380,235 L410,220 L430,260 L400,320 L370,290 L365,250 Z', cx: 395, cy: 275 },
-  { id: 'JH', name: 'Jharkhand', path: 'M330,245 L380,238 L385,280 L350,300 L315,285 L310,260 Z', cx: 348, cy: 270 },
-  { id: 'OR', name: 'Odisha', path: 'M310,290 L365,280 L395,320 L370,380 L300,370 L280,320 Z', cx: 335, cy: 335 },
-  { id: 'CG', name: 'Chhattisgarh', path: 'M260,270 L310,260 L330,310 L310,360 L255,350 L240,300 Z', cx: 280, cy: 310 },
-  { id: 'MP', name: 'Madhya Pradesh', path: 'M160,230 L260,220 L280,270 L260,330 L180,340 L130,290 Z', cx: 205, cy: 280 },
-  { id: 'GJ', name: 'Gujarat', path: 'M60,240 L130,230 L150,280 L130,340 L60,350 L30,300 Z', cx: 90, cy: 290 },
-  { id: 'MH', name: 'Maharashtra', path: 'M100,330 L200,320 L260,340 L270,410 L180,440 L80,400 Z', cx: 175, cy: 380 },
-  { id: 'TS', name: 'Telangana', path: 'M200,380 L270,370 L300,400 L280,440 L210,450 L190,410 Z', cx: 245, cy: 410 },
-  { id: 'AP', name: 'Andhra Pradesh', path: 'M210,445 L300,420 L340,480 L300,540 L220,530 L190,480 Z', cx: 260, cy: 480 },
-  { id: 'KA', name: 'Karnataka', path: 'M120,420 L200,410 L220,470 L200,540 L120,550 L90,480 Z', cx: 155, cy: 480 },
-  { id: 'GA', name: 'Goa', path: 'M95,465 L115,460 L118,480 L100,488 Z', cx: 106, cy: 474 },
-  { id: 'KL', name: 'Kerala', path: 'M130,540 L160,530 L175,590 L150,640 L120,620 L115,570 Z', cx: 145, cy: 585 },
-  { id: 'TN', name: 'Tamil Nadu', path: 'M160,530 L230,510 L260,560 L240,630 L170,640 L150,590 Z', cx: 200, cy: 580 },
-  { id: 'NE', name: 'Northeast', path: 'M440,180 L520,170 L540,220 L510,260 L440,250 L430,210 Z', cx: 480, cy: 215 }
+  // Northern States
+  { 
+    id: 'JK', 
+    name: 'Jammu & Kashmir', 
+    capital: 'Srinagar',
+    path: 'M168,8 L175,5 L185,8 L200,12 L215,18 L225,28 L230,42 L228,58 L222,72 L212,82 L198,88 L185,92 L172,88 L160,78 L152,65 L148,50 L152,35 L158,22 L168,8 Z',
+    cx: 188, cy: 48
+  },
+  { 
+    id: 'LA', 
+    name: 'Ladakh', 
+    capital: 'Leh',
+    path: 'M230,5 L265,2 L290,8 L305,25 L300,45 L288,60 L270,68 L252,62 L238,52 L230,42 L228,25 L230,5 Z',
+    cx: 265, cy: 35
+  },
+  { 
+    id: 'HP', 
+    name: 'Himachal Pradesh', 
+    capital: 'Shimla',
+    path: 'M198,88 L212,82 L228,85 L242,92 L250,105 L245,118 L232,125 L218,122 L205,115 L195,105 L192,95 L198,88 Z',
+    cx: 220, cy: 105
+  },
+  { 
+    id: 'PB', 
+    name: 'Punjab', 
+    capital: 'Chandigarh',
+    path: 'M172,102 L192,95 L205,108 L210,122 L202,135 L188,142 L172,138 L162,128 L160,115 L172,102 Z',
+    cx: 185, cy: 120
+  },
+  { 
+    id: 'UK', 
+    name: 'Uttarakhand', 
+    capital: 'Dehradun',
+    path: 'M245,105 L265,98 L285,105 L295,120 L288,138 L272,148 L255,145 L240,135 L235,120 L245,105 Z',
+    cx: 265, cy: 125
+  },
+  { 
+    id: 'HR', 
+    name: 'Haryana', 
+    capital: 'Chandigarh',
+    path: 'M175,138 L202,135 L218,145 L222,162 L212,178 L192,182 L175,175 L165,160 L168,145 L175,138 Z',
+    cx: 192, cy: 158
+  },
+  { 
+    id: 'DL', 
+    name: 'Delhi', 
+    capital: 'New Delhi',
+    path: 'M205,160 L215,158 L220,168 L215,178 L205,180 L200,170 L205,160 Z',
+    cx: 210, cy: 169
+  },
+  { 
+    id: 'RJ', 
+    name: 'Rajasthan', 
+    capital: 'Jaipur',
+    path: 'M90,165 L125,155 L165,152 L188,160 L200,180 L195,215 L185,250 L165,280 L130,290 L95,280 L65,255 L55,220 L60,185 L90,165 Z',
+    cx: 130, cy: 218
+  },
+  { 
+    id: 'UP', 
+    name: 'Uttar Pradesh', 
+    capital: 'Lucknow',
+    path: 'M205,155 L240,145 L275,148 L310,160 L345,178 L365,200 L358,225 L335,248 L295,258 L255,262 L220,258 L195,245 L185,218 L192,190 L205,155 Z',
+    cx: 275, cy: 205
+  },
+  { 
+    id: 'BR', 
+    name: 'Bihar', 
+    capital: 'Patna',
+    path: 'M345,205 L378,195 L405,205 L418,225 L412,250 L390,265 L358,268 L338,255 L335,235 L345,205 Z',
+    cx: 375, cy: 232
+  },
+  { 
+    id: 'SK', 
+    name: 'Sikkim', 
+    capital: 'Gangtok',
+    path: 'M418,178 L432,172 L442,182 L438,198 L425,205 L415,195 L418,178 Z',
+    cx: 428, cy: 188
+  },
+  { 
+    id: 'AR', 
+    name: 'Arunachal Pradesh', 
+    capital: 'Itanagar',
+    path: 'M485,145 L520,138 L555,148 L570,165 L565,188 L545,205 L515,210 L485,200 L472,180 L478,158 L485,145 Z',
+    cx: 522, cy: 175
+  },
+  { 
+    id: 'NL', 
+    name: 'Nagaland', 
+    capital: 'Kohima',
+    path: 'M545,205 L565,200 L575,218 L568,238 L548,245 L535,235 L538,218 L545,205 Z',
+    cx: 555, cy: 222
+  },
+  { 
+    id: 'MN', 
+    name: 'Manipur', 
+    capital: 'Imphal',
+    path: 'M548,248 L568,242 L578,260 L572,282 L555,290 L538,280 L535,262 L548,248 Z',
+    cx: 556, cy: 268
+  },
+  { 
+    id: 'MZ', 
+    name: 'Mizoram', 
+    capital: 'Aizawl',
+    path: 'M528,290 L545,282 L558,295 L555,320 L540,335 L522,325 L518,305 L528,290 Z',
+    cx: 538, cy: 310
+  },
+  { 
+    id: 'TR', 
+    name: 'Tripura', 
+    capital: 'Agartala',
+    path: 'M502,290 L518,285 L528,302 L522,325 L505,332 L492,318 L495,298 L502,290 Z',
+    cx: 510, cy: 308
+  },
+  { 
+    id: 'ML', 
+    name: 'Meghalaya', 
+    capital: 'Shillong',
+    path: 'M455,232 L492,225 L515,235 L518,252 L498,262 L468,258 L450,248 L455,232 Z',
+    cx: 482, cy: 245
+  },
+  { 
+    id: 'AS', 
+    name: 'Assam', 
+    capital: 'Dispur',
+    path: 'M435,195 L468,188 L502,195 L535,202 L545,218 L535,235 L518,252 L492,260 L455,265 L435,255 L428,235 L430,215 L435,195 Z M502,265 L518,262 L532,275 L525,290 L505,288 L495,278 L502,265 Z',
+    cx: 475, cy: 225
+  },
+  { 
+    id: 'WB', 
+    name: 'West Bengal', 
+    capital: 'Kolkata',
+    path: 'M390,258 L418,248 L445,255 L460,278 L455,312 L435,355 L410,378 L388,365 L378,330 L375,295 L382,270 L390,258 Z',
+    cx: 415, cy: 310
+  },
+  { 
+    id: 'JH', 
+    name: 'Jharkhand', 
+    capital: 'Ranchi',
+    path: 'M335,258 L375,252 L395,272 L398,305 L378,330 L348,338 L320,325 L315,295 L325,272 L335,258 Z',
+    cx: 355, cy: 295
+  },
+  { 
+    id: 'OR', 
+    name: 'Odisha', 
+    capital: 'Bhubaneswar',
+    path: 'M318,328 L355,318 L395,332 L418,365 L408,410 L375,438 L332,442 L298,425 L285,390 L292,355 L318,328 Z',
+    cx: 350, cy: 382
+  },
+  { 
+    id: 'CG', 
+    name: 'Chhattisgarh', 
+    capital: 'Raipur',
+    path: 'M278,295 L318,285 L342,310 L348,355 L328,395 L295,410 L262,395 L252,358 L258,320 L278,295 Z',
+    cx: 300, cy: 348
+  },
+  { 
+    id: 'MP', 
+    name: 'Madhya Pradesh', 
+    capital: 'Bhopal',
+    path: 'M155,250 L198,238 L248,245 L285,265 L295,305 L280,355 L248,385 L195,392 L148,378 L125,338 L128,295 L155,250 Z',
+    cx: 210, cy: 318
+  },
+  { 
+    id: 'GJ', 
+    name: 'Gujarat', 
+    capital: 'Gandhinagar',
+    path: 'M45,265 L85,250 L125,255 L148,285 L145,335 L125,378 L85,395 L48,388 L22,358 L18,315 L28,285 L45,265 Z',
+    cx: 82, cy: 328
+  },
+  { 
+    id: 'DD', 
+    name: 'Daman & Diu', 
+    capital: 'Daman',
+    path: 'M52,395 L68,392 L72,405 L58,410 L52,395 Z',
+    cx: 60, cy: 400
+  },
+  { 
+    id: 'DN', 
+    name: 'Dadra & Nagar Haveli', 
+    capital: 'Silvassa',
+    path: 'M72,405 L85,400 L92,418 L78,425 L72,405 Z',
+    cx: 82, cy: 413
+  },
+  { 
+    id: 'MH', 
+    name: 'Maharashtra', 
+    capital: 'Mumbai',
+    path: 'M78,388 L128,375 L175,378 L215,390 L262,398 L285,428 L275,478 L235,515 L175,528 L115,512 L72,478 L55,438 L62,405 L78,388 Z',
+    cx: 168, cy: 448
+  },
+  { 
+    id: 'TS', 
+    name: 'Telangana', 
+    capital: 'Hyderabad',
+    path: 'M225,425 L275,415 L315,432 L328,468 L312,505 L268,518 L232,508 L215,472 L225,425 Z',
+    cx: 270, cy: 465
+  },
+  { 
+    id: 'AP', 
+    name: 'Andhra Pradesh', 
+    capital: 'Amaravati',
+    path: 'M235,508 L285,495 L332,505 L365,545 L355,598 L318,635 L265,648 L222,625 L205,575 L215,535 L235,508 Z',
+    cx: 285, cy: 572
+  },
+  { 
+    id: 'KA', 
+    name: 'Karnataka', 
+    capital: 'Bengaluru',
+    path: 'M105,495 L165,478 L215,490 L248,525 L245,585 L225,638 L175,658 L118,645 L78,598 L72,545 L88,508 L105,495 Z',
+    cx: 158, cy: 568
+  },
+  { 
+    id: 'GA', 
+    name: 'Goa', 
+    capital: 'Panaji',
+    path: 'M82,515 L98,508 L108,525 L102,545 L85,548 L75,535 L82,515 Z',
+    cx: 92, cy: 528
+  },
+  { 
+    id: 'KL', 
+    name: 'Kerala', 
+    capital: 'Thiruvananthapuram',
+    path: 'M118,638 L148,625 L175,648 L182,702 L165,748 L135,758 L112,738 L102,695 L108,658 L118,638 Z',
+    cx: 142, cy: 695
+  },
+  { 
+    id: 'TN', 
+    name: 'Tamil Nadu', 
+    capital: 'Chennai',
+    path: 'M165,618 L218,595 L268,608 L305,648 L312,705 L288,755 L238,772 L185,758 L158,715 L155,665 L165,618 Z',
+    cx: 232, cy: 685
+  },
+  { 
+    id: 'PY', 
+    name: 'Puducherry', 
+    capital: 'Puducherry',
+    path: 'M238,652 L252,648 L258,665 L248,675 L235,668 L238,652 Z',
+    cx: 246, cy: 662
+  },
+  { 
+    id: 'LD', 
+    name: 'Lakshadweep', 
+    capital: 'Kavaratti',
+    path: 'M42,645 L55,642 L58,658 L48,665 L38,655 L42,645 Z',
+    cx: 48, cy: 653
+  },
+  { 
+    id: 'AN', 
+    name: 'Andaman & Nicobar', 
+    capital: 'Port Blair',
+    path: 'M455,515 L468,508 L478,525 L482,565 L478,608 L468,645 L455,652 L445,638 L442,595 L445,555 L455,515 Z',
+    cx: 462, cy: 580
+  }
 ]
 
+// Political map colors based on reference
+const politicalColors: Record<string, string> = {
+  JK: 'fill-yellow-400', LA: 'fill-yellow-200', HP: 'fill-orange-300', PB: 'fill-cyan-400', 
+  UK: 'fill-pink-300', HR: 'fill-purple-300', DL: 'fill-red-500', RJ: 'fill-yellow-400', 
+  UP: 'fill-green-400', BR: 'fill-pink-300', SK: 'fill-cyan-300', AR: 'fill-blue-400', 
+  NL: 'fill-orange-400', MN: 'fill-purple-400', MZ: 'fill-green-400', TR: 'fill-yellow-300', 
+  ML: 'fill-pink-400', AS: 'fill-green-300', WB: 'fill-green-500', JH: 'fill-yellow-300', 
+  OR: 'fill-orange-400', MP: 'fill-red-400', GJ: 'fill-green-400', MH: 'fill-green-500', 
+  CT: 'fill-cyan-400', AP: 'fill-yellow-300', TS: 'fill-pink-500', GA: 'fill-blue-500', 
+  KA: 'fill-yellow-400', KL: 'fill-orange-400', TN: 'fill-green-500', PY: 'fill-red-400', 
+  DN: 'fill-purple-500', DD: 'fill-purple-500', LD: 'fill-cyan-500', AN: 'fill-green-500'
+}
+
 interface IndiaMapProps {
-  mode?: 'health' | 'saturation' | 'freshness' | 'risk'
+  mode?: 'health' | 'saturation' | 'freshness' | 'risk' | 'political'
   onStateClick?: (stateId: string) => void
   showLabels?: boolean
   interactive?: boolean
@@ -57,7 +297,13 @@ export function IndiaMap({
 
   const getStateColor = (stateId: string) => {
     const state = stateData.find(s => s.id === stateId)
-    if (!state) return 'fill-gray-200'
+    
+    // Political mode doesn't need data
+    if (mode === 'political') {
+      return politicalColors[stateId] || 'fill-slate-200'
+    }
+
+    if (!state) return 'fill-slate-200'
     
     if (mode === 'risk') {
       const riskColors = {
@@ -66,26 +312,43 @@ export function IndiaMap({
         high: 'fill-orange-500',
         critical: 'fill-red-500'
       }
-      return riskColors[state.risk as keyof typeof riskColors] || 'fill-gray-200'
+      return riskColors[state.risk as keyof typeof riskColors] || 'fill-slate-200'
     }
     
     if (mode === 'health' || mode === 'saturation') {
       const coverage = state.coverage
-      if (coverage >= 98) return 'fill-emerald-400'
-      if (coverage >= 95) return 'fill-cyan-400'
-      if (coverage >= 90) return 'fill-amber-400'
-      return 'fill-red-400'
+      if (coverage >= 98) return 'fill-emerald-500'
+      if (coverage >= 95) return 'fill-cyan-500'
+      if (coverage >= 90) return 'fill-amber-500'
+      return 'fill-red-500'
     }
     
     if (mode === 'freshness') {
       const freshness = state.freshness
-      if (freshness >= 95) return 'fill-emerald-400'
-      if (freshness >= 90) return 'fill-cyan-400'
-      if (freshness >= 85) return 'fill-amber-400'
-      return 'fill-red-400'
+      if (freshness >= 95) return 'fill-emerald-500'
+      if (freshness >= 90) return 'fill-cyan-500'
+      if (freshness >= 85) return 'fill-amber-500'
+      return 'fill-red-500'
     }
     
     return 'fill-gati-light'
+  }
+
+  const getHoverColor = (stateId: string) => {
+    const state = stateData.find(s => s.id === stateId)
+    if (!state) return 'fill-slate-300'
+    
+    if (mode === 'risk') {
+      const riskColors = {
+        low: 'fill-emerald-300',
+        medium: 'fill-amber-300',
+        high: 'fill-orange-400',
+        critical: 'fill-red-400'
+      }
+      return riskColors[state.risk as keyof typeof riskColors] || 'fill-slate-300'
+    }
+    
+    return 'fill-gati-accent'
   }
 
   const getStateData = (stateId: string) => {
@@ -94,7 +357,7 @@ export function IndiaMap({
 
   const handleStateClick = (stateId: string) => {
     if (!interactive) return
-    setSelectedState(stateId)
+    setSelectedState(stateId === selectedState ? null : stateId)
     onStateClick?.(stateId)
   }
 
@@ -103,88 +366,111 @@ export function IndiaMap({
   const handleReset = () => {
     setZoom(1)
     setPan({ x: 0, y: 0 })
+    setSelectedState(null)
   }
 
+  const selectedStateData = selectedState ? getStateData(selectedState) : null
+  const selectedStateInfo = selectedState ? indiaStatesData.find(s => s.id === selectedState) : null
+
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-gradient-to-b from-white to-gati-light/20 rounded-2xl overflow-hidden">
-      {/* Glow effect background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(72,202,228,0.1)_0%,transparent_70%)]" />
-        <div className="absolute inset-0 bg-grid opacity-30" />
+    <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-gradient-to-br from-slate-50 via-white to-cyan-50/30 rounded-2xl overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-40">
+        <svg className="w-full h-full">
+          <defs>
+            <pattern id="grid-pattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(0,180,216,0.1)" strokeWidth="1"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid-pattern)" />
+        </svg>
       </div>
+      
+      {/* Glow effect */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(72,202,228,0.15)_0%,transparent_60%)]" />
       
       {/* Controls */}
       {interactive && (
         <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
           <button
             onClick={handleZoomIn}
-            className="p-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-100"
+            className="p-2.5 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all border border-gray-100 hover:border-gati-accent/50 group"
           >
-            <ZoomIn className="w-4 h-4 text-gati-muted" />
+            <ZoomIn className="w-4 h-4 text-gati-muted group-hover:text-gati-accent transition-colors" />
           </button>
           <button
             onClick={handleZoomOut}
-            className="p-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-100"
+            className="p-2.5 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all border border-gray-100 hover:border-gati-accent/50 group"
           >
-            <ZoomOut className="w-4 h-4 text-gati-muted" />
+            <ZoomOut className="w-4 h-4 text-gati-muted group-hover:text-gati-accent transition-colors" />
           </button>
           <button
             onClick={handleReset}
-            className="p-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-100"
+            className="p-2.5 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all border border-gray-100 hover:border-gati-accent/50 group"
           >
-            <RotateCcw className="w-4 h-4 text-gati-muted" />
+            <RotateCcw className="w-4 h-4 text-gati-muted group-hover:text-gati-accent transition-colors" />
           </button>
         </div>
       )}
       
       {/* Legend */}
-      <div className="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-md border border-gray-100">
-        <div className="flex items-center gap-2 mb-2">
-          <Layers className="w-4 h-4 text-gati-muted" />
-          <span className="text-xs font-medium text-gati-muted uppercase tracking-wide">
+      <div className="absolute top-4 left-4 z-20 bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-gray-100">
+        <div className="flex items-center gap-2 mb-3">
+          <Layers className="w-4 h-4 text-gati-accent" />
+          <span className="text-xs font-semibold text-gati-text uppercase tracking-wider">
             {mode === 'health' && 'Identity Health'}
             {mode === 'saturation' && 'Enrolment Saturation'}
             {mode === 'freshness' && 'Update Freshness'}
             {mode === 'risk' && 'Risk Level'}
+            {mode === 'political' && 'Political View'}
           </span>
         </div>
-        <div className="space-y-1.5">
-          {mode === 'risk' ? (
+        <div className="space-y-2">
+          {mode === 'political' ? (
+             <div className="flex flex-wrap gap-2 max-w-[120px]">
+               <span className="w-3 h-3 rounded-full bg-yellow-400" />
+               <span className="w-3 h-3 rounded-full bg-green-400" />
+               <span className="w-3 h-3 rounded-full bg-red-400" />
+               <span className="w-3 h-3 rounded-full bg-blue-400" />
+               <span className="w-3 h-3 rounded-full bg-pink-400" />
+               <span className="text-xs text-gati-muted w-full mt-1">States & UTs</span>
+             </div>
+          ) : mode === 'risk' ? (
             <>
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-emerald-400" />
-                <span className="text-xs text-gati-text">Low</span>
+                <span className="w-4 h-4 rounded-md bg-emerald-500 shadow-sm" />
+                <span className="text-xs font-medium text-gati-text">Low Risk</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-amber-400" />
-                <span className="text-xs text-gati-text">Medium</span>
+                <span className="w-4 h-4 rounded-md bg-amber-500 shadow-sm" />
+                <span className="text-xs font-medium text-gati-text">Medium Risk</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-orange-500" />
-                <span className="text-xs text-gati-text">High</span>
+                <span className="w-4 h-4 rounded-md bg-orange-500 shadow-sm" />
+                <span className="text-xs font-medium text-gati-text">High Risk</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-red-500" />
-                <span className="text-xs text-gati-text">Critical</span>
+                <span className="w-4 h-4 rounded-md bg-red-500 shadow-sm" />
+                <span className="text-xs font-medium text-gati-text">Critical</span>
               </div>
             </>
           ) : (
             <>
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-emerald-400" />
-                <span className="text-xs text-gati-text">≥98%</span>
+                <span className="w-4 h-4 rounded-md bg-emerald-500 shadow-sm" />
+                <span className="text-xs font-medium text-gati-text">≥98%</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-cyan-400" />
-                <span className="text-xs text-gati-text">95-98%</span>
+                <span className="w-4 h-4 rounded-md bg-cyan-500 shadow-sm" />
+                <span className="text-xs font-medium text-gati-text">95-98%</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-amber-400" />
-                <span className="text-xs text-gati-text">90-95%</span>
+                <span className="w-4 h-4 rounded-md bg-amber-500 shadow-sm" />
+                <span className="text-xs font-medium text-gati-text">90-95%</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-red-400" />
-                <span className="text-xs text-gati-text">&lt;90%</span>
+                <span className="w-4 h-4 rounded-md bg-red-500 shadow-sm" />
+                <span className="text-xs font-medium text-gati-text">&lt;90%</span>
               </div>
             </>
           )}
@@ -193,125 +479,195 @@ export function IndiaMap({
       
       {/* SVG Map */}
       <motion.svg
-        viewBox="0 0 560 680"
-        className="w-full h-full"
+        viewBox="0 0 600 800"
+        className="w-full h-full transition-all duration-700"
         style={{ 
-          transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
+          transform: `perspective(1000px) rotateX(${mode === 'political' ? 10 : 0}deg) scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
         }}
+        preserveAspectRatio="xMidYMid meet"
       >
         <defs>
-          {/* Glow filter */}
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          {/* Outer glow filter */}
+          <filter id="state-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
               <feMergeNode in="SourceGraphic"/>
             </feMerge>
           </filter>
           
-          {/* Shadow filter */}
-          <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.15"/>
+          {/* Drop shadow */}
+          <filter id="drop-shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="rgba(10,36,99,0.2)" floodOpacity="0.3"/>
           </filter>
           
-          {/* State gradient */}
-          <linearGradient id="stateGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.3)" />
-            <stop offset="100%" stopColor="rgba(0,0,0,0.1)" />
+          {/* Selected state glow */}
+          <filter id="selected-glow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="8" result="glow"/>
+            <feFlood floodColor="#00B4D8" floodOpacity="0.6"/>
+            <feComposite in2="glow" operator="in"/>
+            <feMerge>
+              <feMergeNode/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+
+          {/* 3D-like gradient for states */}
+          <linearGradient id="state-3d-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.4)" />
+            <stop offset="50%" stopColor="rgba(255,255,255,0)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.15)" />
+          </linearGradient>
+
+          {/* Ocean gradient */}
+          <linearGradient id="ocean-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#E0F7FF" />
+            <stop offset="100%" stopColor="#B8E8F5" />
           </linearGradient>
         </defs>
         
-        {/* Ocean/background */}
-        <rect x="0" y="0" width="560" height="680" fill="transparent" />
-        
-        {/* States */}
-        <g filter="url(#shadow)">
-          {indiaStatesData.map((state) => (
-            <g key={state.id}>
-              <motion.path
-                d={state.path}
-                className={`
-                  ${getStateColor(state.id)}
-                  stroke-white stroke-[1.5]
-                  cursor-pointer
-                  transition-all duration-300
-                `}
-                style={{
-                  filter: hoveredState === state.id ? 'url(#glow)' : undefined
-                }}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ 
-                  opacity: 1, 
-                  scale: hoveredState === state.id ? 1.02 : 1,
-                }}
-                transition={{ duration: 0.3, delay: Math.random() * 0.3 }}
-                onMouseEnter={() => setHoveredState(state.id)}
-                onMouseLeave={() => setHoveredState(null)}
-                onClick={() => handleStateClick(state.id)}
-              />
-              
-              {/* Pulsing node for critical/high risk states */}
-              {getStateData(state.id)?.risk === 'critical' && (
-                <motion.circle
-                  cx={state.cx}
-                  cy={state.cy}
-                  r="6"
-                  className="fill-red-500"
+        {/* India outline shadow */}
+        <g filter="url(#drop-shadow)">
+          {/* 3D Extrusion (Depth) Layer */}
+          <g transform="translate(4, 6)">
+             {indiaStatesData.map((state) => (
+               <path 
+                 key={`depth-${state.id}`}
+                 d={state.path}
+                 className="fill-slate-900/20"
+                 stroke="none"
+               />
+             ))}
+          </g>
+
+          {/* Neighboring countries labels */}
+          <text x="60" y="50" className="fill-slate-400 text-[10px] font-medium">PAKISTAN</text>
+          <text x="320" y="35" className="fill-slate-400 text-[10px] font-medium">CHINA</text>
+          <text x="385" y="135" className="fill-slate-400 text-[10px] font-medium">NEPAL</text>
+          <text x="455" y="155" className="fill-slate-400 text-[10px] font-medium">BHUTAN</text>
+          <text x="520" y="290" className="fill-slate-400 text-[10px] font-medium">MYANMAR</text>
+          <text x="435" y="415" className="fill-slate-400 text-[10px] font-medium">BAY OF BENGAL</text>
+          <text x="28" y="485" className="fill-slate-400 text-[10px] font-medium">ARABIAN SEA</text>
+          <text x="185" y="790" className="fill-slate-400 text-[10px] font-medium">INDIAN OCEAN</text>
+          <text x="285" y="790" className="fill-slate-400 text-[10px] font-medium">SRI LANKA</text>
+          
+          {/* States */}
+          {indiaStatesData.map((state, index) => {
+            const isHovered = hoveredState === state.id
+            const isSelected = selectedState === state.id
+            const hasData = stateData.some(s => s.id === state.id)
+            
+            return (
+              <g key={state.id}>
+                <motion.path
+                  d={state.path}
+                  className={`
+                    ${isSelected ? 'fill-gati-accent' : isHovered ? getHoverColor(state.id) : getStateColor(state.id)}
+                    stroke-white 
+                    cursor-pointer
+                    transition-colors duration-200
+                  `}
+                  strokeWidth={isSelected ? 2.5 : isHovered ? 2 : 1.5}
+                  strokeLinejoin="round"
+                  filter={isSelected ? 'url(#selected-glow)' : undefined}
+                  initial={{ opacity: 0, pathLength: 0 }}
                   animate={{ 
-                    scale: [1, 1.5, 1],
-                    opacity: [0.8, 0.4, 0.8]
+                    opacity: 1, 
+                    pathLength: 1,
+                    scale: isSelected ? 1.02 : isHovered ? 1.01 : 1,
                   }}
                   transition={{ 
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: 'easeInOut'
+                    duration: 0.5, 
+                    delay: index * 0.02,
+                    scale: { duration: 0.2 }
                   }}
+                  onMouseEnter={() => interactive && setHoveredState(state.id)}
+                  onMouseLeave={() => interactive && setHoveredState(null)}
+                  onClick={() => handleStateClick(state.id)}
                 />
-              )}
-              
-              {/* State label */}
-              {showLabels && zoom >= 1 && (
-                <text
-                  x={state.cx}
-                  y={state.cy}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  className="text-[8px] font-semibold fill-gati-primary pointer-events-none"
-                  style={{ opacity: hoveredState === state.id ? 1 : 0.7 }}
-                >
-                  {state.id}
-                </text>
-              )}
-            </g>
-          ))}
+                
+                {/* 3D overlay gradient */}
+                <motion.path
+                  d={state.path}
+                  fill="url(#state-3d-gradient)"
+                  className="pointer-events-none"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.5 }}
+                  transition={{ delay: index * 0.02 + 0.3 }}
+                />
+                
+                {/* State labels */}
+                {showLabels && zoom >= 0.8 && (
+                  <motion.g
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isHovered || isSelected ? 1 : 0.8 }}
+                    transition={{ delay: index * 0.02 + 0.4 }}
+                  >
+                    <text
+                      x={state.cx}
+                      y={state.cy}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      className={`
+                        font-bold pointer-events-none select-none
+                        ${isSelected || isHovered ? 'fill-white' : 'fill-slate-700'}
+                      `}
+                      style={{ 
+                        fontSize: state.id === 'DL' || state.id === 'GA' || state.id === 'SK' || state.id === 'DD' || state.id === 'DN' || state.id === 'PY' || state.id === 'LD' ? '6px' : '8px',
+                        textShadow: isSelected || isHovered ? '0 1px 2px rgba(0,0,0,0.3)' : '0 1px 1px rgba(255,255,255,0.8)'
+                      }}
+                    >
+                      {state.id}
+                    </text>
+                  </motion.g>
+                )}
+              </g>
+            )
+          })}
         </g>
       </motion.svg>
       
       {/* Hover tooltip */}
       <AnimatePresence>
-        {hoveredState && !selectedState && (
-          <motion.div
-            className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-3 border border-gray-100 z-30 min-w-[200px]"
+        {hoveredState && !selectedState && interactive && (
+          <motion.div 
+            className="absolute bottom-4 left-4 z-30 bg-white rounded-xl shadow-xl p-4 border border-gray-100 min-w-[200px]"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
           >
             {(() => {
-              const state = getStateData(hoveredState)
-              if (!state) return null
+              const stateInfo = indiaStatesData.find(s => s.id === hoveredState)
+              const data = getStateData(hoveredState)
               return (
                 <>
-                  <h4 className="font-semibold text-gati-text mb-2">{state.name}</h4>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <p className="text-gati-muted text-xs">Coverage</p>
-                      <p className="font-medium text-gati-text">{state.coverage}%</p>
-                    </div>
-                    <div>
-                      <p className="text-gati-muted text-xs">Enrolments</p>
-                      <p className="font-medium text-gati-text">{formatIndianNumber(state.enrolments)}</p>
-                    </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapPin className="w-4 h-4 text-gati-accent" />
+                    <h3 className="font-bold text-gati-text">{stateInfo?.name || hoveredState}</h3>
                   </div>
+                  {stateInfo?.capital && (
+                    <p className="text-xs text-gati-muted mb-2">Capital: {stateInfo.capital}</p>
+                  )}
+                  {data && (
+                    <div className="space-y-1.5 pt-2 border-t border-gray-100">
+                      <div className="flex justify-between">
+                        <span className="text-xs text-gati-muted">Coverage</span>
+                        <span className="text-xs font-semibold text-gati-text">{data.coverage}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-xs text-gati-muted">Freshness</span>
+                        <span className="text-xs font-semibold text-gati-text">{data.freshness}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-xs text-gati-muted">Risk Level</span>
+                        <span className={`text-xs font-semibold capitalize ${
+                          data.risk === 'low' ? 'text-emerald-600' :
+                          data.risk === 'medium' ? 'text-amber-600' :
+                          data.risk === 'high' ? 'text-orange-600' : 'text-red-600'
+                        }`}>{data.risk}</span>
+                      </div>
+                    </div>
+                  )}
                 </>
               )
             })()}
@@ -321,66 +677,120 @@ export function IndiaMap({
       
       {/* Selected state detail panel */}
       <AnimatePresence>
-        {selectedState && (
-          <motion.div
-            className="absolute right-4 top-20 bottom-4 w-80 z-30"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
+        {selectedState && selectedStateData && interactive && (
+          <motion.div 
+            className="absolute top-4 right-16 z-30 bg-white rounded-2xl shadow-2xl border border-gray-100 w-72 overflow-hidden"
+            initial={{ opacity: 0, x: 20, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 20, scale: 0.95 }}
           >
-            <div className="relative h-full">
-              <button
+            {/* Header */}
+            <div className="bg-gradient-to-r from-gati-primary to-gati-secondary p-4 text-white relative">
+              <button 
                 onClick={() => setSelectedState(null)}
-                className="absolute -left-3 top-4 w-6 h-6 bg-white rounded-full shadow-md flex items-center justify-center z-10 hover:bg-gray-50"
+                className="absolute top-3 right-3 p-1 hover:bg-white/20 rounded-lg transition-colors"
               >
-                <X className="w-4 h-4 text-gati-muted" />
+                <X className="w-4 h-4" />
               </button>
-              
-              {(() => {
-                const state = getStateData(selectedState)
-                if (!state) return null
-                return <StateCoverageCard state={state} />
-              })()}
-              
-              {/* AI Insight */}
-              <motion.div
-                className="mt-4 gati-panel p-4"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <Info className="w-4 h-4 text-gati-accent" />
-                  <span className="text-sm font-medium text-gati-text">AI Insight</span>
+              <div className="flex items-center gap-2 mb-1">
+                <MapPin className="w-4 h-4" />
+                <span className="text-xs font-medium uppercase tracking-wide opacity-80">State Details</span>
+              </div>
+              <h3 className="text-xl font-bold">{selectedStateInfo?.name}</h3>
+              {selectedStateInfo?.capital && (
+                <p className="text-sm opacity-80 mt-1">Capital: {selectedStateInfo.capital}</p>
+              )}
+            </div>
+            
+            {/* Stats */}
+            <div className="p-4 space-y-4">
+              {/* Coverage */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-gati-accent" />
+                    <span className="text-sm font-medium text-gati-text">Coverage</span>
+                  </div>
+                  <span className="text-lg font-bold text-gati-primary">{selectedStateData.coverage}%</span>
                 </div>
-                <p className="text-sm text-gati-muted leading-relaxed">
-                  {(() => {
-                    const state = getStateData(selectedState)
-                    if (!state) return ''
-                    if (state.risk === 'critical') return 'This region shows significant delays in child enrolment and biometric updates. Immediate field intervention recommended.'
-                    if (state.risk === 'high') return 'This district shows delayed biometric transitions among adolescents. Mobile camp deployment suggested.'
-                    if (state.risk === 'medium') return 'Moderate update backlog detected. Seasonal migration patterns may be contributing factor.'
-                    return 'Region performing well. Continue monitoring for sustained coverage.'
-                  })()}
-                </p>
-              </motion.div>
+                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <motion.div 
+                    className="h-full bg-gradient-to-r from-gati-accent to-gati-secondary rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${selectedStateData.coverage}%` }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                  />
+                </div>
+              </div>
+              
+              {/* Freshness */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-500" />
+                    <span className="text-sm font-medium text-gati-text">Data Freshness</span>
+                  </div>
+                  <span className="text-lg font-bold text-emerald-600">{selectedStateData.freshness}%</span>
+                </div>
+                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <motion.div 
+                    className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${selectedStateData.freshness}%` }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                  />
+                </div>
+              </div>
+              
+              {/* Enrolments */}
+              <div className="pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gati-muted">Total Enrolments</span>
+                  <span className="text-sm font-bold text-gati-text">{formatIndianNumber(selectedStateData.enrolments)}</span>
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-sm text-gati-muted">Monthly Updates</span>
+                  <span className="text-sm font-bold text-gati-text">{formatIndianNumber(selectedStateData.updates)}</span>
+                </div>
+              </div>
+              
+              {/* Risk Badge */}
+              <div className="pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className={`w-4 h-4 ${
+                      selectedStateData.risk === 'low' ? 'text-emerald-500' :
+                      selectedStateData.risk === 'medium' ? 'text-amber-500' :
+                      selectedStateData.risk === 'high' ? 'text-orange-500' : 'text-red-500'
+                    }`} />
+                    <span className="text-sm font-medium text-gati-text">Risk Level</span>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                    selectedStateData.risk === 'low' ? 'bg-emerald-100 text-emerald-700' :
+                    selectedStateData.risk === 'medium' ? 'bg-amber-100 text-amber-700' :
+                    selectedStateData.risk === 'high' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'
+                  }`}>
+                    {selectedStateData.risk}
+                  </span>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  )
-}
-
-// Compact map for dashboard
-export function MiniIndiaMap({ className = '' }: { className?: string }) {
-  return (
-    <div className={`relative ${className}`}>
-      <IndiaMap 
-        mode="risk" 
-        showLabels={false} 
-        interactive={false}
-      />
+      
+      {/* Bottom info bar */}
+      {interactive && (
+        <div className="absolute bottom-4 right-4 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-md border border-gray-100">
+          <span className="text-xs text-gati-muted">
+            {indiaStatesData.length} States & UTs
+          </span>
+          <span className="text-gray-300">|</span>
+          <span className="text-xs font-medium text-gati-primary">
+            Click state for details
+          </span>
+        </div>
+      )}
     </div>
   )
 }

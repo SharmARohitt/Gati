@@ -1,5 +1,5 @@
 export { AnimatedCounter, PulsingDot, GlowingBorder, AnimatedGrid, FloatingParticles, StatusBadge, SeverityBadge, ProgressBar, ConfidenceMeter, Skeleton, CardSkeleton } from './AnimatedElements'
 export { Sidebar, TopBar, Footer } from './Navigation'
 export { StatCard, HeroStat, PulseStat, StateCoverageCard, QuickStats } from './StatCards'
-export { IndiaMap, MiniIndiaMap } from './IndiaMap'
+export { IndiaMap } from './IndiaMap'
 export { TimelineChart, MonthlyTrendsChart, AgeDistributionChart, CoverageTrendChart, StateComparisonChart, RiskDistributionChart } from './Charts'
