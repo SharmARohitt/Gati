@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { AuthProviderWrapper } from '@/components/auth/AuthProviderWrapper'
 
 export const metadata: Metadata = {
   title: 'GATI - Governance & Aadhaar Tracking Intelligence',
@@ -19,7 +20,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased bg-gati-white">
-        {children}
+        <AuthProviderWrapper>
+          {children}
+        </AuthProviderWrapper>
       </body>
     </html>
   )

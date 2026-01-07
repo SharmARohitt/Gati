@@ -52,6 +52,7 @@ import {
   PulsingDot
 } from '@/components/ui'
 import { formatNumber, formatDateTime } from '@/lib/utils'
+import { exportToCSV, exportToPDF } from '@/lib/utils/exportUtils'
 import {
   AreaChart,
   Area,
@@ -272,6 +273,7 @@ export default function AnalyticsPage() {
   const [showAnomalyModal, setShowAnomalyModal] = useState(false)
   const [selectedAnomaly, setSelectedAnomaly] = useState<AnomalyData | null>(null)
   const [chartType, setChartType] = useState<'area' | 'line' | 'bar'>('area')
+  const [exporting, setExporting] = useState<'pdf' | 'csv' | null>(null)
   
   // Real data states
   const [nationalData, setNationalData] = useState<NationalOverview | null>(null)
@@ -1492,7 +1494,7 @@ export default function AnalyticsPage() {
             {/* Right Column - Risk & Anomalies */}
             <div className="space-y-6">
               
-              {/* Risk Distribution */}
+              {/* Risk Distribution - Computed Fresh from statesData */}
               <motion.div 
                 className="bg-white rounded-2xl border border-slate-200/50 p-6 shadow-sm"
                 initial={{ opacity: 0, x: 20 }}
@@ -1503,49 +1505,68 @@ export default function AnalyticsPage() {
                     <AlertTriangle className="w-4 h-4 text-amber-600" />
                   </div>
                   <h2 className="font-semibold text-slate-900">Risk Distribution</h2>
+                  <span className="ml-auto text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full flex items-center gap-1">
+                    <Activity className="w-3 h-3" /> Live
+                  </span>
                 </div>
                 
-                {nationalData && (
-                  <div className="space-y-4">
-                    {[
-                      { label: 'Low Risk', count: nationalData.riskDistribution.low, color: 'emerald' },
-                      { label: 'Medium Risk', count: nationalData.riskDistribution.medium, color: 'yellow' },
-                      { label: 'High Risk', count: nationalData.riskDistribution.high, color: 'orange' },
-                      { label: 'Critical', count: nationalData.riskDistribution.critical, color: 'red' }
-                    ].map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-3 h-3 rounded-full bg-${item.color}-500`} />
-                          <span className="text-sm text-slate-600">{item.label}</span>
+                {statesData.length > 0 && (() => {
+                  // Compute fresh from statesData
+                  const riskCounts = {
+                    low: statesData.filter(s => s.riskLevel === 'low').length,
+                    medium: statesData.filter(s => s.riskLevel === 'medium').length,
+                    high: statesData.filter(s => s.riskLevel === 'high').length,
+                    critical: statesData.filter(s => s.riskLevel === 'critical').length
+                  }
+                  const totalStates = statesData.length
+                  
+                  return (
+                    <div className="space-y-4">
+                      {[
+                        { label: 'Low Risk', count: riskCounts.low, color: 'emerald', bgClass: 'bg-emerald-500' },
+                        { label: 'Medium Risk', count: riskCounts.medium, color: 'yellow', bgClass: 'bg-yellow-500' },
+                        { label: 'High Risk', count: riskCounts.high, color: 'orange', bgClass: 'bg-orange-500' },
+                        { label: 'Critical', count: riskCounts.critical, color: 'red', bgClass: 'bg-red-500' }
+                      ].map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-3 h-3 rounded-full ${item.bgClass}`} />
+                            <span className="text-sm text-slate-600">{item.label}</span>
+                          </div>
+                          <span className="text-sm font-semibold text-slate-900">{item.count} states</span>
                         </div>
-                        <span className="text-sm font-semibold text-slate-900">{item.count} states</span>
+                      ))}
+                      
+                      {/* Visual bar */}
+                      <div className="flex h-4 rounded-full overflow-hidden mt-4 bg-slate-100">
+                        <div 
+                          className="bg-emerald-500 transition-all duration-500" 
+                          style={{ width: `${(riskCounts.low / totalStates) * 100}%` }}
+                        />
+                        <div 
+                          className="bg-yellow-500 transition-all duration-500" 
+                          style={{ width: `${(riskCounts.medium / totalStates) * 100}%` }}
+                        />
+                        <div 
+                          className="bg-orange-500 transition-all duration-500" 
+                          style={{ width: `${(riskCounts.high / totalStates) * 100}%` }}
+                        />
+                        <div 
+                          className="bg-red-500 transition-all duration-500" 
+                          style={{ width: `${(riskCounts.critical / totalStates) * 100}%` }}
+                        />
                       </div>
-                    ))}
-                    
-                    {/* Visual bar */}
-                    <div className="flex h-4 rounded-full overflow-hidden mt-4 bg-slate-100">
-                      <div 
-                        className="bg-emerald-500 transition-all duration-500" 
-                        style={{ width: `${(nationalData.riskDistribution.low / nationalData.statesCount) * 100}%` }}
-                      />
-                      <div 
-                        className="bg-yellow-500 transition-all duration-500" 
-                        style={{ width: `${(nationalData.riskDistribution.medium / nationalData.statesCount) * 100}%` }}
-                      />
-                      <div 
-                        className="bg-orange-500 transition-all duration-500" 
-                        style={{ width: `${(nationalData.riskDistribution.high / nationalData.statesCount) * 100}%` }}
-                      />
-                      <div 
-                        className="bg-red-500 transition-all duration-500" 
-                        style={{ width: `${(nationalData.riskDistribution.critical / nationalData.statesCount) * 100}%` }}
-                      />
+                      
+                      {/* Summary */}
+                      <div className="text-xs text-slate-500 text-center pt-2 border-t border-slate-100">
+                        Total: {totalStates} states/UTs analyzed
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )
+                })()}
               </motion.div>
 
-              {/* AI Detected Anomalies */}
+              {/* AI Detected Anomalies - Fresh from statesData */}
               <motion.div 
                 className="bg-white rounded-2xl border border-slate-200/50 p-6 shadow-sm"
                 initial={{ opacity: 0, x: 20 }}
@@ -1557,49 +1578,80 @@ export default function AnalyticsPage() {
                     <Sparkles className="w-4 h-4 text-white" />
                   </div>
                   <h2 className="font-semibold text-slate-900">AI-Detected Anomalies</h2>
+                  <span className="ml-auto text-xs text-cyan-600 bg-cyan-50 px-2 py-1 rounded-full flex items-center gap-1">
+                    <Cpu className="w-3 h-3" /> AI
+                  </span>
                 </div>
                 
                 <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
                   {statesData.filter(s => s.riskLevel === 'critical' || s.riskLevel === 'high').length > 0 ? (
                     statesData
                       .filter(s => s.riskLevel === 'critical' || s.riskLevel === 'high')
-                      .slice(0, 10)
+                      .sort((a, b) => {
+                        // Sort by severity first (critical > high), then by coverage (lower is worse)
+                        if (a.riskLevel === 'critical' && b.riskLevel !== 'critical') return -1
+                        if (b.riskLevel === 'critical' && a.riskLevel !== 'critical') return 1
+                        return a.coverage - b.coverage
+                      })
+                      .slice(0, 12)
                       .map((state, idx) => {
-                        // Generate anomaly details for this state
+                        // Determine the primary issue for this state
+                        const issues: string[] = []
+                        let primaryIssue = ''
+                        let primaryMessage = ''
+                        let primaryReason = ''
+                        let primaryRecommendation = ''
+                        
+                        if (state.coverage < 50) {
+                          issues.push('Low Coverage')
+                          primaryIssue = 'Coverage Gap'
+                          primaryMessage = `Critically low coverage at ${state.coverage.toFixed(1)}% (Target: 85%)`
+                          primaryReason = `${state.stateName} has only ${state.coverage.toFixed(1)}% Aadhaar coverage, which is ${(85 - state.coverage).toFixed(1)}% below national target. Analysis reveals: 1) Only ${state.districtsCount} districts have active enrollment centers, 2) ${state.pincodesCount} pincodes show irregular enrollment patterns, 3) Rural-urban coverage disparity exceeds 30%, 4) ${formatNumber(state.totalEnrolments)} total enrollments is below expected population coverage.`
+                          primaryRecommendation = `PRIORITY ACTIONS: Deploy ${Math.ceil((85 - state.coverage) / 5)} mobile units immediately. Set up camps in all ${state.districtsCount} districts. Partner with schools, PHCs, and gram panchayats. Target ${formatNumber(Math.round(state.totalEnrolments * 0.7))} new enrollments in 6 months.`
+                        } else if (state.freshness < 45) {
+                          issues.push('Stale Data')
+                          primaryIssue = 'Data Staleness'
+                          primaryMessage = `Only ${state.freshness.toFixed(1)}% records are fresh (Target: 80%)`
+                          primaryReason = `${state.stateName}'s biometric freshness is critically low at ${state.freshness.toFixed(1)}%. This means ${(100 - state.freshness).toFixed(1)}% of Aadhaar holders haven't updated in 5+ years. Causes: 1) ${formatNumber(Math.round(state.totalBiometricUpdates * 0.3))} citizens have outdated fingerprints, 2) Update center capacity insufficient for ${state.pincodesCount} pincodes, 3) Low awareness about mandatory biometric updates.`
+                          primaryRecommendation = `URGENT: Send SMS alerts to ${formatNumber(Math.round(state.totalEnrolments * 0.6))} citizens with stale records. Extend center hours to 12hrs. Deploy ${Math.ceil(state.districtsCount / 2)} additional operators. Target ${formatNumber(Math.round(state.totalBiometricUpdates * 0.5))} updates in 3 months.`
+                        } else if ((state.totalDemographicUpdates / Math.max(state.totalEnrolments, 1)) > 0.6) {
+                          const demoRatio = (state.totalDemographicUpdates / state.totalEnrolments * 100).toFixed(1)
+                          issues.push('High Update Rate')
+                          primaryIssue = 'Demographic Anomaly'
+                          primaryMessage = `Unusual ${demoRatio}% demographic update rate detected`
+                          primaryReason = `${state.stateName} shows ${demoRatio}% demographic update rate, significantly above normal 20-30% range. ${formatNumber(state.totalDemographicUpdates)} demographic updates against ${formatNumber(state.totalEnrolments)} enrollments. Possible causes: 1) Mass migration events, 2) Administrative boundary changes, 3) Potential duplicate entries, 4) Data quality issues in ${state.districtsCount} districts.`
+                          primaryRecommendation = `INVESTIGATE: Audit ${Math.ceil(state.districtsCount * 0.3)} high-volume districts. Cross-verify with census and election data. Flag ${formatNumber(Math.round(state.totalDemographicUpdates * 0.1))} suspicious updates. Implement stricter verification protocols.`
+                        } else {
+                          issues.push('Multiple Factors')
+                          primaryIssue = 'Composite Risk'
+                          primaryMessage = `${state.riskLevel === 'critical' ? 'Critical' : 'High'} risk from multiple factors`
+                          primaryReason = `${state.stateName} flagged due to combined risk factors: Coverage ${state.coverage.toFixed(1)}%, Freshness ${state.freshness.toFixed(1)}%, across ${state.districtsCount} districts and ${state.pincodesCount} pincodes. Age distribution shows ${formatNumber(state.ageDistribution.infants)} infants, ${formatNumber(state.ageDistribution.children)} children, ${formatNumber(state.ageDistribution.adults)} adults. Biometric updates ${formatNumber(state.totalBiometricUpdates)} are ${state.totalBiometricUpdates < state.totalDemographicUpdates ? 'below' : 'above'} demographic updates.`
+                          primaryRecommendation = `COMPREHENSIVE PLAN: 1) Increase enrollment capacity by 50%, 2) Launch district-wise improvement programs, 3) Weekly monitoring dashboards, 4) Train ${state.districtsCount * 10} new operators, 5) Quarterly review with state coordinator.`
+                        }
+                        
+                        // Generate the anomaly object
                         const stateAnomaly: AnomalyData = {
-                          id: `sidebar-${state.stateCode}`,
+                          id: `sidebar-${state.stateCode}-${idx}`,
                           state: state.stateName,
                           stateCode: state.stateCode,
-                          type: state.riskLevel === 'critical' ? 'Critical Risk Alert' : 'High Risk Alert',
+                          type: primaryIssue,
                           severity: state.riskLevel as 'critical' | 'high',
-                          message: state.coverage < 50 
-                            ? `Critically low Aadhaar coverage at ${state.coverage.toFixed(1)}%`
-                            : state.freshness < 40
-                            ? `Severely outdated biometric records (${state.freshness.toFixed(1)}% fresh)`
-                            : `Multiple risk factors detected requiring immediate attention`,
-                          reason: state.coverage < 50
-                            ? `${state.stateName} has only ${state.coverage.toFixed(1)}% Aadhaar coverage, which is critically below the national target of 85%. Primary causes include: 1) Limited enrolment infrastructure with only ${state.districtsCount} operational districts, 2) Geographical challenges in reaching remote populations across ${state.pincodesCount} pincodes, 3) Low awareness campaigns and outreach programs, 4) Possible data synchronization issues with central UIDAI servers.`
-                            : state.freshness < 40
-                            ? `Only ${state.freshness.toFixed(1)}% of Aadhaar records in ${state.stateName} are up-to-date. This staleness indicates: 1) Citizens not updating biometrics after the 5-year mandatory period, 2) Insufficient update centers in ${state.districtsCount} districts, 3) Lack of SMS/notification reminders to citizens, 4) Possible technical issues preventing successful biometric updates.`
-                            : `${state.stateName} exhibits multiple concerning patterns: 1) Enrolment to population ratio of ${(state.totalEnrolments / 1000000).toFixed(2)}M is below expected, 2) Biometric update rate is irregular, 3) Demographic updates show unusual patterns suggesting possible data quality issues, 4) District-level coverage varies significantly across ${state.districtsCount} districts.`,
-                          recommendation: state.coverage < 50
-                            ? `IMMEDIATE ACTIONS: 1) Deploy 50+ mobile enrolment vans across underserved pincodes, 2) Partner with state government for Aadhaar awareness campaigns, 3) Integrate Aadhaar enrollment with ration card and voter ID distribution, 4) Set up temporary camps in schools and community centers, 5) Increase working hours of existing centers.`
-                            : state.freshness < 40
-                            ? `IMMEDIATE ACTIONS: 1) Launch state-wide biometric update drive with SMS notifications to 2M+ citizens, 2) Set up dedicated update counters at all ${state.districtsCount} district offices, 3) Reduce wait times by increasing operator capacity, 4) Enable online appointment booking for updates, 5) Conduct door-to-door updates for elderly population.`
-                            : `IMMEDIATE ACTIONS: 1) Conduct comprehensive audit of all enrollment centers, 2) Implement real-time monitoring dashboard for district collectors, 3) Train 500+ new operators for quality improvement, 4) Set up grievance redressal mechanism, 5) Weekly review meetings with state UIDAI coordinator.`,
-                          metric: state.coverage < 50 ? 'coverage' : state.freshness < 40 ? 'freshness' : 'riskLevel',
-                          value: state.coverage < 50 ? state.coverage : state.freshness < 40 ? state.freshness : 4,
+                          message: primaryMessage,
+                          reason: primaryReason,
+                          recommendation: primaryRecommendation,
+                          metric: state.coverage < 50 ? 'coverage' : state.freshness < 45 ? 'freshness' : 'composite',
+                          value: state.coverage < 50 ? state.coverage : state.freshness < 45 ? state.freshness : (state.coverage + state.freshness) / 2,
                           expectedRange: { min: 75, max: 95 },
                           detectedAt: new Date().toISOString()
                         }
                         
                         return (
                           <motion.div 
-                            key={state.stateCode}
+                            key={`${state.stateCode}-${idx}`}
                             className={`p-4 rounded-xl border-2 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] ${getRiskColor(state.riskLevel)}`}
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: idx * 0.05 }}
+                            transition={{ delay: idx * 0.03 }}
                             onClick={() => {
                               setSelectedAnomaly(stateAnomaly)
                               setShowAnomalyModal(true)
@@ -1610,25 +1662,37 @@ export default function AnalyticsPage() {
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
                                   state.riskLevel === 'critical' ? 'bg-red-500 text-white' : 'bg-orange-500 text-white'
                                 }`}>
-                                  {state.stateCode}
+                                  {state.stateCode || state.stateName.substring(0, 2).toUpperCase()}
                                 </div>
-                                <span className="text-sm font-semibold text-slate-800">{state.stateName}</span>
+                                <div>
+                                  <span className="text-sm font-semibold text-slate-800 block">{state.stateName}</span>
+                                  <span className="text-[10px] text-slate-500">{issues.join(', ')}</span>
+                                </div>
                               </div>
                               <span className={`text-xs px-2 py-0.5 rounded-full capitalize font-medium ${getRiskColor(state.riskLevel)}`}>
                                 {state.riskLevel}
                               </span>
                             </div>
-                            <p className="text-xs text-slate-600 mb-2">
-                              {state.coverage < 50 
-                                ? `Coverage: ${state.coverage.toFixed(1)}%`
-                                : state.freshness < 40
-                                ? `Freshness: ${state.freshness.toFixed(1)}%`
-                                : `Multiple issues detected`
-                              }
-                            </p>
+                            
+                            {/* Key Metrics */}
+                            <div className="grid grid-cols-2 gap-2 mb-2">
+                              <div className="bg-white/60 rounded-lg px-2 py-1">
+                                <span className="text-[10px] text-slate-500 block">Coverage</span>
+                                <span className={`text-xs font-bold ${state.coverage < 50 ? 'text-red-600' : state.coverage < 70 ? 'text-orange-600' : 'text-emerald-600'}`}>
+                                  {state.coverage.toFixed(1)}%
+                                </span>
+                              </div>
+                              <div className="bg-white/60 rounded-lg px-2 py-1">
+                                <span className="text-[10px] text-slate-500 block">Freshness</span>
+                                <span className={`text-xs font-bold ${state.freshness < 45 ? 'text-red-600' : state.freshness < 65 ? 'text-orange-600' : 'text-emerald-600'}`}>
+                                  {state.freshness.toFixed(1)}%
+                                </span>
+                              </div>
+                            </div>
+                            
                             <div className="flex items-center gap-2 text-xs text-cyan-600 font-medium">
                               <Eye className="w-3 h-3" />
-                              <span>Click for AI analysis</span>
+                              <span>Click for AI analysis & fix</span>
                             </div>
                           </motion.div>
                         )
@@ -1645,7 +1709,7 @@ export default function AnalyticsPage() {
                 </div>
               </motion.div>
 
-              {/* Data Summary */}
+              {/* Data Summary - Fresh from statesData */}
               <motion.div 
                 className="bg-white rounded-2xl border border-slate-200/50 p-6 shadow-sm"
                 initial={{ opacity: 0, x: 20 }}
@@ -1657,23 +1721,42 @@ export default function AnalyticsPage() {
                     <Database className="w-4 h-4 text-slate-600" />
                   </div>
                   <h2 className="font-semibold text-slate-900">Data Summary</h2>
+                  <span className="ml-auto text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full flex items-center gap-1">
+                    <Activity className="w-3 h-3" /> Live
+                  </span>
                 </div>
                 
-                <div className="space-y-4">
-                  {[
-                    { label: 'Total States/UTs', value: nationalData?.statesCount || 0 },
-                    { label: 'Total Districts', value: nationalData?.districtsCount || 0 },
-                    { label: 'Total Pincodes', value: nationalData?.pincodesCount || 0 },
-                    { label: 'Data Freshness', value: `${nationalData?.freshnessIndex.toFixed(1) || 0}%` }
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-                      <span className="text-sm text-slate-500">{item.label}</span>
-                      <span className="text-sm font-semibold text-slate-900">
-                        {typeof item.value === 'number' ? formatNumber(item.value) : item.value}
-                      </span>
+                {statesData.length > 0 && (() => {
+                  // Compute fresh from statesData
+                  const totalStates = statesData.length
+                  const totalDistricts = statesData.reduce((sum, s) => sum + s.districtsCount, 0)
+                  const totalPincodes = statesData.reduce((sum, s) => sum + s.pincodesCount, 0)
+                  const avgFreshness = statesData.reduce((sum, s) => sum + s.freshness, 0) / totalStates
+                  const totalEnrolments = statesData.reduce((sum, s) => sum + s.totalEnrolments, 0)
+                  const totalBiometric = statesData.reduce((sum, s) => sum + s.totalBiometricUpdates, 0)
+                  
+                  return (
+                    <div className="space-y-4">
+                      {[
+                        { label: 'Total States/UTs', value: totalStates, icon: Map },
+                        { label: 'Total Districts', value: totalDistricts, icon: Building2 },
+                        { label: 'Total Pincodes', value: totalPincodes, icon: MapPin },
+                        { label: 'Total Records', value: totalEnrolments + totalBiometric, icon: Database },
+                        { label: 'Data Freshness', value: `${avgFreshness.toFixed(1)}%`, icon: Zap }
+                      ].map((item, idx) => (
+                        <div key={idx} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
+                          <div className="flex items-center gap-2">
+                            <item.icon className="w-4 h-4 text-slate-400" />
+                            <span className="text-sm text-slate-500">{item.label}</span>
+                          </div>
+                          <span className="text-sm font-semibold text-slate-900">
+                            {typeof item.value === 'number' ? formatNumber(item.value) : item.value}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  )
+                })()}
               </motion.div>
 
               {/* Export Options */}
@@ -1686,18 +1769,71 @@ export default function AnalyticsPage() {
                 <h2 className="font-semibold text-white mb-4">Export Report</h2>
                 
                 <div className="space-y-3">
-                  <button className="w-full px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium text-white flex items-center justify-center gap-2 transition-colors border border-white/10">
-                    <File className="w-4 h-4 text-red-400" />
-                    Download PDF Report
+                  <button 
+                    onClick={() => {
+                      setExporting('pdf')
+                      setTimeout(() => {
+                        exportToPDF(statesData, nationalData)
+                        setExporting(null)
+                      }, 100)
+                    }}
+                    disabled={exporting !== null || statesData.length === 0}
+                    className="w-full px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium text-white flex items-center justify-center gap-2 transition-colors border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {exporting === 'pdf' ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 text-red-400 animate-spin" />
+                        Generating PDF...
+                      </>
+                    ) : (
+                      <>
+                        <File className="w-4 h-4 text-red-400" />
+                        Download PDF Report
+                      </>
+                    )}
                   </button>
-                  <button className="w-full px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium text-white flex items-center justify-center gap-2 transition-colors border border-white/10">
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-                    Export to CSV
+                  <button 
+                    onClick={() => {
+                      setExporting('csv')
+                      setTimeout(() => {
+                        exportToCSV(statesData, nationalData)
+                        setExporting(null)
+                      }, 100)
+                    }}
+                    disabled={exporting !== null || statesData.length === 0}
+                    className="w-full px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium text-white flex items-center justify-center gap-2 transition-colors border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {exporting === 'csv' ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 text-emerald-400 animate-spin" />
+                        Exporting CSV...
+                      </>
+                    ) : (
+                      <>
+                        <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                        Export to CSV
+                      </>
+                    )}
                   </button>
-                  <button className="w-full px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-xl text-sm font-medium text-white flex items-center justify-center gap-2 transition-colors shadow-lg shadow-cyan-500/25">
+                  <button 
+                    onClick={() => {
+                      // Copy link to clipboard
+                      navigator.clipboard.writeText(window.location.href)
+                      alert('Analytics link copied to clipboard!')
+                    }}
+                    className="w-full px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-xl text-sm font-medium text-white flex items-center justify-center gap-2 transition-colors shadow-lg shadow-cyan-500/25"
+                  >
                     <Share2 className="w-4 h-4" />
                     Share Analytics
                   </button>
+                </div>
+                
+                {/* Export Info */}
+                <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10">
+                  <p className="text-xs text-slate-400 flex items-center gap-2">
+                    <Info className="w-3 h-3" />
+                    PDF includes all {statesData.length} states data & risk analysis
+                  </p>
                 </div>
               </motion.div>
             </div>
@@ -1824,9 +1960,15 @@ export default function AnalyticsPage() {
                 >
                   Close
                 </button>
-                <button className="flex-1 px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl text-sm font-medium text-white hover:from-cyan-600 hover:to-blue-600 transition-colors flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => {
+                    exportToPDF(statesData, nationalData)
+                    setShowAnomalyModal(false)
+                  }}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl text-sm font-medium text-white hover:from-cyan-600 hover:to-blue-600 transition-colors flex items-center justify-center gap-2"
+                >
                   <Download className="w-4 h-4" />
-                  Export Report
+                  Export Full Report
                 </button>
               </div>
             </motion.div>

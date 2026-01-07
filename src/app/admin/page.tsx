@@ -18,7 +18,9 @@ import {
   RefreshCw,
   Fingerprint,
   Database,
-  UserCheck
+  UserCheck,
+  LogOut,
+  Shield
 } from 'lucide-react'
 import { 
   IndiaMap,
@@ -28,6 +30,7 @@ import {
   AnimatedCounter
 } from '@/components/ui'
 import { formatNumber, formatDateTime } from '@/lib/utils'
+import { useAuth } from '@/lib/auth/authContext'
 
 // Types for real data
 interface NationalOverview {
@@ -61,6 +64,7 @@ export default function AdminDashboard() {
   const [overview, setOverview] = useState<NationalOverview | null>(null)
   const [anomalies, setAnomalies] = useState<AnomalyData[]>([])
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const { user, logout } = useAuth()
 
   const fetchData = async () => {
     try {
@@ -129,6 +133,18 @@ export default function AdminDashboard() {
             <PulsingDot color="bg-emerald-500" />
             <span className="text-sm font-medium text-gati-text">Live Data</span>
           </div>
+          {/* User Info & Logout */}
+          <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gati-saffron/10 to-gati-green/10 rounded-lg border border-gati-saffron/20">
+            <Shield className="w-4 h-4 text-gati-saffron" />
+            <span className="text-sm font-medium text-gati-blue">{user?.username || 'Admin'}</span>
+          </div>
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg border border-red-200 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="text-sm font-medium">Logout</span>
+          </button>
         </div>
       </div>
 
