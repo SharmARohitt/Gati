@@ -118,22 +118,94 @@ export default function IntelligencePage() {
     return () => clearInterval(interval)
   }, [])
 
-  // Run AI Analysis
-  const runAIAnalysis = useCallback((capabilityId: string) => {
+  // Run AI Analysis - REAL ML API calls
+  const runAIAnalysis = useCallback(async (capabilityId: string) => {
     setIsProcessing(true)
     setSelectedCapability(capabilityId)
     
-    // Simulate AI processing
-    setTimeout(() => {
-      const insight = generateAIInsight(capabilityId)
+    try {
+      let endpoint = '/api/ai/anomaly'
+      if (capabilityId === 'forecasting') endpoint = '/api/ai/forecast'
+      else if (capabilityId === 'mobility' || capabilityId === 'lifecycle') endpoint = '/api/ai/risk'
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      })
+      
+      const data = await response.json()
+      
+      // Transform ML API response to insight format
+      let insight: AIInsight
+      if (data.success && (data.results?.length > 0 || data.forecast)) {
+        if (capabilityId === 'forecasting' && data.forecast) {
+          insight = {
+            id: Date.now().toString(),
+            type: 'prediction',
+            title: 'Forecast Generated',
+            content: `Trend: ${data.forecast.trend || 'stable'}. Model confidence: ${(data.forecast.confidence * 100 || 85).toFixed(1)}%. Check forecast dashboard for detailed projections.`,
+            confidence: data.forecast.confidence * 100 || 85,
+            timestamp: new Date(),
+            severity: 'low'
+          }
+        } else if (data.results?.length > 0) {
+          const result = data.results[0]
+          insight = {
+            id: Date.now().toString(),
+            type: capabilityId === 'anomaly' ? 'anomaly' : 'prediction',
+            title: capabilityId === 'anomaly' ? 'Anomaly Detected' : 'Analysis Complete',
+            content: result.description || `${capabilityId} analysis completed. Found ${data.results.length} items requiring attention.`,
+            confidence: (result.confidence || result.score || 0.85) * 100,
+            timestamp: new Date(),
+            region: result.state || result.location,
+            severity: result.severity || (result.score > 0.8 ? 'high' : result.score > 0.5 ? 'medium' : 'low')
+          }
+        } else {
+          insight = {
+            id: Date.now().toString(),
+            type: 'recommendation',
+            title: 'No Issues Found',
+            content: `${capabilityId} analysis complete. No significant issues detected at this time.`,
+            confidence: 95,
+            timestamp: new Date(),
+            severity: 'low'
+          }
+        }
+      } else {
+        // ML API unavailable, show status
+        insight = {
+          id: Date.now().toString(),
+          type: 'alert',
+          title: 'ML Service Status',
+          content: data.error || 'ML API is currently processing. Results will appear when available.',
+          confidence: 0,
+          timestamp: new Date(),
+          severity: 'medium'
+        }
+      }
+      
       setActiveInsights(prev => [insight, ...prev.slice(0, 4)])
-      setIsProcessing(false)
       setLiveStats(prev => ({ ...prev, predictions: prev.predictions + 1 }))
-    }, 1500 + Math.random() * 1000)
+    } catch (error) {
+      console.error('[AI Analysis] Error:', error)
+      const errorInsight: AIInsight = {
+        id: Date.now().toString(),
+        type: 'alert',
+        title: 'Connection Error',
+        content: 'Unable to connect to ML service. Please ensure the Python ML server is running.',
+        confidence: 0,
+        timestamp: new Date(),
+        severity: 'high'
+      }
+      setActiveInsights(prev => [errorInsight, ...prev.slice(0, 4)])
+    } finally {
+      setIsProcessing(false)
+    }
   }, [])
 
-  // Handle chat submit
-  const handleChatSubmit = useCallback((e: React.FormEvent) => {
+  // Handle chat submit - REAL AI powered by Gemini
+  const handleChatSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     if (!chatInput.trim() || isAITyping) return
 
@@ -144,35 +216,44 @@ export default function IntelligencePage() {
       timestamp: new Date()
     }
     setChatMessages(prev => [...prev, userMessage])
+    const userQuery = chatInput
     setChatInput('')
     setIsAITyping(true)
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponses: Record<string, string> = {
-        'coverage': 'Based on current data, national Aadhaar coverage stands at 97.2%. The lowest coverage is in Meghalaya (89.3%) and highest in Kerala (99.6%). I recommend focusing field operations on northeastern states for maximum impact.',
-        'risk': 'Current high-risk regions identified: Bihar (critical - 23 districts), Jharkhand (high - 12 districts), and Assam (high - 8 districts). Primary concerns include data freshness below 80% and pending mandatory updates exceeding capacity.',
-        'prediction': 'Q2 2026 forecast: Expected 28.5M total updates nationally. Peak months: March-April due to financial year-end documentation requirements. Recommend 15% capacity increase in urban centers.',
-        'anomaly': 'In the last 24 hours, I detected 3 significant anomalies: 1) Unusual spike in Muzaffarpur district, 2) After-hours processing in Lucknow, 3) Biometric rejection rate increase in Kerala. All flagged for review.',
-        'default': `I've analyzed your query about "${chatInput}". Based on aggregated Aadhaar data patterns:\n\n• Current system health: 98.7% operational\n• Active monitoring across 36 states/UTs\n• 12,847 predictions generated today\n• Average confidence score: 94.2%\n\nWould you like me to dive deeper into any specific region or metric?`
-      }
-      
-      const keywords = chatInput.toLowerCase()
-      let response = aiResponses.default
-      if (keywords.includes('coverage')) response = aiResponses.coverage
-      else if (keywords.includes('risk')) response = aiResponses.risk
-      else if (keywords.includes('predict') || keywords.includes('forecast')) response = aiResponses.prediction
-      else if (keywords.includes('anomal') || keywords.includes('unusual')) response = aiResponses.anomaly
+    try {
+      // Call real AI API endpoint
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: userQuery,
+          includeContext: true 
+        })
+      })
 
+      const data = await response.json()
+      
       const aiMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'ai',
-        content: response,
+        content: data.success 
+          ? data.response 
+          : 'I apologize, but I encountered an error processing your request. Please try again.',
         timestamp: new Date()
       }
       setChatMessages(prev => [...prev, aiMessage])
+    } catch (error) {
+      console.error('[AI Chat] Error:', error)
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'ai',
+        content: 'I apologize, but I\'m having trouble connecting to the AI service. Please check your connection and try again.',
+        timestamp: new Date()
+      }
+      setChatMessages(prev => [...prev, errorMessage])
+    } finally {
       setIsAITyping(false)
-    }, 1500 + Math.random() * 1000)
+    }
   }, [chatInput, isAITyping])
 
   const mlCapabilities = [

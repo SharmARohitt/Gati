@@ -22,6 +22,22 @@ dist/
 *.key
 secrets/
 config/secrets.json
+**/secrets.json
+**/*_key.txt
+**/*_secret.txt
+
+# Python ML artifacts
+ml/models/**/model.joblib
+ml/models/**/metadata.json
+ml/models/registry.json
+ml/logs/
+ml/reports/
+ml/__pycache__/
+ml/**/__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
 
 # Debug logs
 npm-debug.log*

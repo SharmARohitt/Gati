@@ -1,0 +1,117 @@
+# GATI ML Configuration
+# All hyperparameters and settings in one place
+
+project:
+  name: "GATI-ML"
+  version: "1.0.0"
+  description: "Governance & Aadhaar Tracking Intelligence - ML Pipeline"
+
+data:
+  base_path: "../data"
+  datasets:
+    biometric:
+      folder: "biometric/api_data_aadhar_biometric"
+      pattern: "*.csv"
+      date_column: "date"
+      date_format: "%d-%m-%Y"
+    demographic:
+      folder: "demographic/api_data_aadhar_demographic"
+      pattern: "*.csv"
+      date_column: "date"
+      date_format: "%d-%m-%Y"
+    enrolment:
+      folder: "enrolment/api_data_aadhar_enrolment"
+      pattern: "*.csv"
+      date_column: "date"
+      date_format: "%d-%m-%Y"
+
+preprocessing:
+  handle_missing: "interpolate"  # options: drop, interpolate, fill_zero
+  outlier_method: "iqr"  # options: iqr, zscore, isolation_forest
+  outlier_threshold: 1.5
+  scaling_method: "standard"  # options: standard, minmax, robust
+
+models:
+  anomaly_detection:
+    algorithm: "isolation_forest"
+    contamination: 0.05  # expected anomaly rate
+    n_estimators: 100
+    max_samples: "auto"
+    random_state: 42
+    alternative_algorithms:
+      - "local_outlier_factor"
+      - "one_class_svm"
+
+  risk_scoring:
+    algorithm: "xgboost"
+    n_estimators: 100
+    max_depth: 6
+    learning_rate: 0.1
+    random_state: 42
+    # Risk thresholds (derived from data distribution)
+    thresholds:
+      low: 0.25
+      medium: 0.50
+      high: 0.75
+      critical: 0.90
+
+  forecasting:
+    algorithm: "prophet"
+    horizon_days: 30
+    seasonality:
+      weekly: true
+      monthly: true
+      yearly: false  # not enough data
+    uncertainty_samples: 1000
+    fallback_algorithm: "exponential_smoothing"
+
+  pattern_recognition:
+    clustering:
+      algorithm: "kmeans"
+      n_clusters: 5
+      random_state: 42
+    correlation:
+      method: "pearson"
+      significance_threshold: 0.05
+
+evaluation:
+  cross_validation_folds: 5
+  test_size: 0.2
+  metrics:
+    anomaly:
+      - "silhouette_score"
+      - "anomaly_rate"
+      - "stability_score"
+    forecasting:
+      - "mae"
+      - "rmse"
+      - "mape"
+      - "coverage"
+    risk:
+      - "accuracy"
+      - "precision"
+      - "recall"
+      - "f1"
+      - "auc_roc"
+
+explainability:
+  enabled: true
+  method: "shap"
+  max_display_features: 10
+  generate_reports: true
+
+versioning:
+  enabled: true
+  model_dir: "saved_models"
+  metadata_file: "model_registry.json"
+  keep_versions: 5
+
+output:
+  api_endpoint: "http://localhost:8000"
+  export_format: "json"
+  reports_dir: "reports"
+
+logging:
+  level: "INFO"
+  file: "logs/gati_ml.log"
+  rotation: "1 week"
