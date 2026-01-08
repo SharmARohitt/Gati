@@ -23,6 +23,11 @@ module.exports = {
           warning: '#F59E0B',      // Warning amber
           danger: '#EF4444',       // Danger red
           critical: '#DC2626',     // Critical
+          // Indian Tricolor inspired
+          saffron: '#FF9933',      // Indian Saffron
+          green: '#138808',        // Indian Green
+          navy: '#0A2463',         // Deep Navy
+          blue: '#1E5AA8',         // Government Blue
         },
         // Severity colors
         'severity': {
@@ -60,6 +65,8 @@ module.exports = {
         'slide-up': 'slideUp 0.6s ease-out forwards',
         'count-up': 'countUp 2s ease-out forwards',
         'grid-flow': 'gridFlow 20s linear infinite',
+        'shimmer': 'shimmer 2s linear infinite',
+        'spin-slow': 'spin 3s linear infinite',
       },
       keyframes: {
         glow: {
@@ -85,6 +92,10 @@ module.exports = {
         gridFlow: {
           '0%': { transform: 'translateX(0) translateY(0)' },
           '100%': { transform: 'translateX(-50px) translateY(-50px)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
         },
       },
       backdropBlur: {

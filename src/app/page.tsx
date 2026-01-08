@@ -71,7 +71,7 @@ export default function LandingPage() {
             <Link href="/intelligence" className="text-sm font-medium text-gati-muted hover:text-gati-primary transition-colors">
               AI Intelligence
             </Link>
-            <Link href="/admin" className="gati-btn-primary text-sm">
+            <Link href="/login" className="gati-btn-primary text-sm">
               Enter Console
             </Link>
           </div>

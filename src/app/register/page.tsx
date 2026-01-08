@@ -1,12 +1,12 @@
 'use client';
 
 /**
- * GATI Login Page
+ * GATI Registration Page
  * Clean, simple design with Supabase authentication
  */
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { 
@@ -20,62 +20,85 @@ import {
   Fingerprint,
   CheckCircle,
   Loader2,
-  Sparkles
+  Sparkles,
+  User,
+  UserPlus
 } from 'lucide-react';
 import { supabaseAuth } from '@/lib/supabase/client';
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loginSuccess, setLoginSuccess] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const returnUrl = searchParams.get('returnUrl') || '/admin';
 
   // Check if already logged in
   useEffect(() => {
     const checkAuth = async () => {
       const { data } = await supabaseAuth.getSession();
       if (data?.session) {
-        router.push(returnUrl);
+        router.push('/admin');
       }
     };
     checkAuth();
-  }, [router, returnUrl]);
+  }, [router]);
+
+  const validateForm = () => {
+    if (!fullName.trim()) {
+      setError('Please enter your full name');
+      return false;
+    }
+    if (!email.trim()) {
+      setError('Please enter your email address');
+      return false;
+    }
+    if (!email.includes('@')) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return false;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsSubmitting(true);
 
-    if (!email.trim() || !password.trim()) {
-      setError('Please enter both email and password');
-      setIsSubmitting(false);
+    if (!validateForm()) {
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      // Authenticate with Supabase
-      const { data, error: authError } = await supabaseAuth.signIn(email, password);
+      const { data, error: authError } = await supabaseAuth.signUp(email, password, {
+        full_name: fullName,
+        role: 'user'
+      });
       
       if (authError) {
-        setError(authError.message || 'Invalid credentials');
+        setError(authError.message || 'Registration failed');
         setIsSubmitting(false);
         return;
       }
       
       if (data?.user) {
-        setLoginSuccess(true);
-        setTimeout(() => {
-          router.push(returnUrl);
-          router.refresh();
-        }, 1000);
+        setRegistrationSuccess(true);
       } else {
-        setError('Authentication failed. Please try again.');
+        setError('Registration failed. Please try again.');
         setIsSubmitting(false);
       }
     } catch {
@@ -85,7 +108,7 @@ export default function LoginPage() {
   };
 
   // Success state
-  if (loginSuccess) {
+  if (registrationSuccess) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center p-4">
         <motion.div
@@ -101,8 +124,17 @@ export default function LoginPage() {
           >
             <CheckCircle className="w-10 h-10 text-white" />
           </motion.div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back!</h2>
-          <p className="text-gray-500">Redirecting to dashboard...</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Account Created!</h2>
+          <p className="text-gray-500 mb-6">
+            Please check your email to verify your account before signing in.
+          </p>
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-gati-primary to-gati-secondary text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all"
+          >
+            Go to Login
+            <ArrowRight className="w-5 h-5" />
+          </Link>
         </motion.div>
       </div>
     );
@@ -140,12 +172,12 @@ export default function LoginPage() {
             transition={{ delay: 0.2 }}
           >
             <h2 className="text-4xl font-bold text-white mb-6 leading-tight">
-              India's Most Advanced<br />
-              Aadhaar Analytics Platform
+              Join India's Premier<br />
+              Governance Platform
             </h2>
             <p className="text-white/80 text-lg mb-8">
-              Secure access to real-time insights across 1.4 billion+ Aadhaar records 
-              with AI-powered fraud detection and governance intelligence.
+              Create your account to access real-time insights, AI-powered analytics, 
+              and secure governance tools for Aadhaar management.
             </p>
 
             {/* Features */}
@@ -180,7 +212,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
+      {/* Right Side - Registration Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
@@ -203,8 +235,11 @@ export default function LoginPage() {
             className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8"
           >
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-              <p className="text-gray-500">Sign in to access the GATI console</p>
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-gati-primary/10 to-gati-secondary/10 flex items-center justify-center">
+                <UserPlus className="w-8 h-8 text-gati-secondary" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Account</h2>
+              <p className="text-gray-500">Join the GATI platform today</p>
             </div>
 
             {/* Error Display */}
@@ -219,7 +254,26 @@ export default function LoginPage() {
               </motion.div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Full Name Input */}
+              <div>
+                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Enter your full name"
+                    className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-gati-secondary focus:ring-2 focus:ring-gati-secondary/20 outline-none transition-all"
+                    autoComplete="name"
+                  />
+                </div>
+              </div>
+
               {/* Email Input */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -251,9 +305,9 @@ export default function LoginPage() {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
+                    placeholder="Create a password (min. 6 characters)"
                     className="w-full pl-12 pr-12 py-3 rounded-xl border border-gray-200 focus:border-gati-secondary focus:ring-2 focus:ring-gati-secondary/20 outline-none transition-all"
-                    autoComplete="current-password"
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
@@ -265,14 +319,42 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Remember & Forgot */}
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer">
+              {/* Confirm Password Input */}
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded border-gray-300 text-gati-secondary focus:ring-gati-secondary/50"
+                    id="confirmPassword"
+                    type={showPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm your password"
+                    className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-gati-secondary focus:ring-2 focus:ring-gati-secondary/20 outline-none transition-all"
+                    autoComplete="new-password"
                   />
-                  <span className="text-sm text-gray-600">Remember me</span>
+                </div>
+              </div>
+
+              {/* Terms Agreement */}
+              <div className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  required
+                  className="w-4 h-4 mt-0.5 rounded border-gray-300 text-gati-secondary focus:ring-gati-secondary/50"
+                />
+                <label htmlFor="terms" className="text-sm text-gray-600">
+                  I agree to the{' '}
+                  <Link href="/terms" className="text-gati-secondary hover:underline">
+                    Terms of Service
+                  </Link>{' '}
+                  and{' '}
+                  <Link href="/privacy" className="text-gati-secondary hover:underline">
+                    Privacy Policy
+                  </Link>
                 </label>
               </div>
 
@@ -286,7 +368,7 @@ export default function LoginPage() {
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   <>
-                    Sign In
+                    Create Account
                     <ArrowRight className="w-5 h-5" />
                   </>
                 )}
@@ -301,15 +383,15 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Create Account Link */}
+            {/* Login Link */}
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
+                Already have an account?{' '}
                 <Link 
-                  href="/register"
+                  href="/login"
                   className="text-gati-secondary font-semibold hover:text-gati-primary transition-colors"
                 >
-                  Create Account
+                  Sign In
                 </Link>
               </p>
             </div>

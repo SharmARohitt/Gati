@@ -4,8 +4,6 @@ import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { 
-  Shield, 
-  LogOut, 
   Fingerprint, 
   LayoutDashboard, 
   BarChart3, 
@@ -14,9 +12,12 @@ import {
   MapPin, 
   Cpu,
   UserCheck,
-  Home
+  Home,
+  Bell,
+  RefreshCw,
+  Shield,
 } from 'lucide-react'
-import { useAuth } from '@/lib/auth/authContext'
+import { useAuth } from '@/components/auth/AuthProviderWrapper'
 
 interface NavItem {
   href: string
@@ -36,8 +37,13 @@ const navItems: NavItem[] = [
 ]
 
 export function AdminHeader() {
-  const { user, logout, isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const pathname = usePathname()
+  const [refreshing, setRefreshing] = React.useState(false)
+  const handleRefresh = () => {
+    setRefreshing(true)
+    window.location.reload()
+  }
 
   if (!isAuthenticated) return null
 
@@ -45,6 +51,28 @@ export function AdminHeader() {
     <header className="bg-white border-b border-gati-gray shadow-sm sticky top-0 z-50">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
+          <div className="flex items-center gap-3">
+            {/* Top Left Section: Refresh, Live Data, Welcome */}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                <RefreshCw className={`w-4 h-4 text-gati-muted ${refreshing ? 'animate-spin' : ''}`} />
+                <span className="text-sm text-gati-text">{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+              </button>
+              <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-gray-200">
+                <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-sm font-medium text-gati-text">Live Data</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gati-saffron/10 to-gati-green/10 rounded-lg border border-gati-saffron/20">
+                <Shield className="w-4 h-4 text-gati-saffron" />
+                <span className="text-sm font-medium text-gati-blue">Welcome, {user?.username || 'User'}</span>
+              </div>
+            </div>
+          </div>
+
           {/* Logo & Brand */}
           <Link href="/" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-gati-saffron via-white to-gati-green rounded-xl flex items-center justify-center shadow-lg">
@@ -79,27 +107,14 @@ export function AdminHeader() {
             })}
           </nav>
 
-          {/* User Section */}
-          <div className="flex items-center gap-3">
-            {/* User Info */}
-            <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gati-saffron/5 to-gati-green/5 rounded-lg border border-gati-gray">
-              <Shield className="w-4 h-4 text-gati-saffron" />
-              <div className="text-right">
-                <p className="text-sm font-medium text-gati-blue leading-none">{user?.username}</p>
-                <p className="text-[10px] text-gati-gray-dark">{user?.role}</p>
-              </div>
-            </div>
-
-            {/* Logout Button */}
-            <button
-              onClick={logout}
-              className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg border border-red-200 transition-colors"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline text-sm font-medium">Logout</span>
-            </button>
-          </div>
+          {/* Notification Bell */}
+          <button
+            className="relative flex items-center justify-center w-10 h-10 bg-gati-gray-light hover:bg-gati-gray rounded-lg transition-colors"
+            title="Notifications"
+          >
+            <Bell className="w-5 h-5 text-gati-gray-dark" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          </button>
         </div>
       </div>
 

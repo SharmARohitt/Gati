@@ -25,7 +25,7 @@ import {
   ChevronRight,
   Fingerprint,
 } from 'lucide-react'
-import { useAuth } from '@/lib/auth/authContext'
+import { useAuth } from '@/components/auth/AuthProviderWrapper'
 import { useNotifications } from '@/lib/store'
 import { useFocusTrap } from '@/lib/a11y'
 

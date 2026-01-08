@@ -25,7 +25,7 @@ import {
   Activity,
   Map,
 } from 'lucide-react'
-import { useAuth } from '@/lib/auth/authContext'
+import { useAuth } from '@/components/auth/AuthProviderWrapper'
 import { useSidebar } from '@/lib/store'
 
 // ============================================

@@ -18,10 +18,10 @@ import {
   ChevronLeft,
   Bell,
   Search,
+  RefreshCw,
   Shield
 } from 'lucide-react'
-import { PulsingDot } from './AnimatedElements'
-import { useAuth } from '@/lib/auth/authContext'
+import { useAuth } from '@/components/auth/AuthProviderWrapper'
 
 const navigationItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
@@ -41,10 +41,12 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const { logout, isAuthenticated } = useAuth()
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
+    router.push('/login')
   }
 
   return (
@@ -118,14 +120,18 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
       {/* Bottom Section */}
       <div className="p-4 border-t border-gray-100 space-y-1">
-        <button className={`
-          w-full flex items-center gap-3 px-4 py-3 rounded-lg
-          text-gati-muted hover:bg-gati-light/20 hover:text-gati-primary
-          transition-all duration-200
-        `}>
+        <Link 
+          href="/settings"
+          className={`
+            w-full flex items-center gap-3 px-4 py-3 rounded-lg
+            text-gati-muted hover:bg-gati-light/20 hover:text-gati-primary
+            transition-all duration-200
+            ${pathname === '/settings' ? 'bg-gati-light/20 text-gati-primary' : ''}
+          `}
+        >
           <Settings className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span className="font-medium text-sm">Settings</span>}
-        </button>
+        </Link>
         <button 
           onClick={handleLogout}
           className={`
@@ -154,8 +160,12 @@ interface TopBarProps {
 }
 
 export function TopBar({ sidebarCollapsed = false }: TopBarProps) {
-  const { user, logout, isAuthenticated } = useAuth()
-
+  const { user } = useAuth();
+  const [refreshing, setRefreshing] = React.useState(false);
+  const handleRefresh = () => {
+    setRefreshing(true);
+    window.location.reload();
+  };
   return (
     <motion.header
       className="fixed top-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 z-30 flex items-center justify-between px-6"
@@ -163,6 +173,26 @@ export function TopBar({ sidebarCollapsed = false }: TopBarProps) {
       animate={{ left: sidebarCollapsed ? 80 : 280 }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
     >
+      {/* Left Section: Refresh, Live Data, Welcome */}
+      <div className="flex items-center gap-3">
+        <button 
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+        >
+          <RefreshCw className={`w-4 h-4 text-gati-muted ${refreshing ? 'animate-spin' : ''}`} />
+          <span className="text-sm text-gati-text">{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+        </button>
+        <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-gray-200">
+          <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-sm font-medium text-gati-text">Live Data</span>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gati-saffron/10 to-gati-green/10 rounded-lg border border-gati-saffron/20">
+          <Shield className="w-4 h-4 text-gati-saffron" />
+          <span className="text-sm font-medium text-gati-blue">Welcome, {user?.username || 'User'}</span>
+        </div>
+      </div>
+
       {/* Search */}
       <div className="relative w-96">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gati-muted" />
@@ -178,45 +208,11 @@ export function TopBar({ sidebarCollapsed = false }: TopBarProps) {
 
       {/* Right Section */}
       <div className="flex items-center gap-4">
-        {/* Live Status */}
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-200">
-          <PulsingDot color="bg-emerald-500" size="w-2 h-2" />
-          <span className="text-xs font-medium text-emerald-700">System Live</span>
-        </div>
-
         {/* Notifications */}
         <button className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
           <Bell className="w-5 h-5 text-gati-muted" />
           <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
         </button>
-
-        {/* User Info */}
-        {isAuthenticated && user ? (
-          <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-gati-saffron/10 to-gati-green/10 rounded-lg border border-gati-saffron/20">
-              <Shield className="w-4 h-4 text-gati-saffron" />
-              <div className="text-right">
-                <p className="text-sm font-medium text-gati-text">{user.username}</p>
-                <p className="text-xs text-gati-muted capitalize">{user.role}</p>
-              </div>
-            </div>
-            <button
-              onClick={logout}
-              className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg border border-red-200 transition-colors"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          <Link 
-            href="/login"
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gati-saffron to-gati-green text-white rounded-lg hover:shadow-lg transition-all"
-          >
-            <Shield className="w-4 h-4" />
-            <span className="text-sm font-medium">Login</span>
-          </Link>
-        )}
       </div>
     </motion.header>
   )

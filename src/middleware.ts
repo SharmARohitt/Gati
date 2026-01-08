@@ -1,10 +1,12 @@
 /**
  * GATI Security Middleware
  * Applies security headers and validations to all requests
+ * Integrates with Supabase authentication
  */
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { updateSession } from '@/lib/supabase/middleware';
 
 // Security headers to apply to all responses
 const securityHeaders = {
@@ -54,7 +56,7 @@ function checkRateLimit(ip: string, path: string): { allowed: boolean; remaining
   return { allowed: true, remaining: limit - record.count };
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Skip middleware for static files and images
@@ -92,38 +94,37 @@ export function middleware(request: NextRequest) {
       );
     }
   }
+
+  // Update Supabase session (refreshes tokens if needed)
+  const { response, user } = await updateSession(request);
   
   // Protected routes check
   const protectedPaths = ['/admin', '/analytics', '/intelligence', '/audit'];
   const isProtectedPath = protectedPaths.some(p => pathname.startsWith(p));
   
   if (isProtectedPath) {
-    const sessionCookie = request.cookies.get('gati_session');
-    
-    if (!sessionCookie) {
-      // Redirect to login
+    // Check for Supabase session only
+    if (!user) {
+      // Redirect to login page
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('returnUrl', pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
   
-  // Create response with security headers
-  const response = NextResponse.next();
-  
-  // Apply security headers
+  // Apply security headers to the response
   Object.entries(securityHeaders).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
   
-  // Add CSP header
+  // Add CSP header with Supabase domains
   response.headers.set('Content-Security-Policy', [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https://router.huggingface.co https://api.mapbox.com http://localhost:8000",
+    "connect-src 'self' https://*.supabase.co https://router.huggingface.co https://api.mapbox.com http://localhost:8000",
     "frame-ancestors 'none'"
   ].join('; '));
   

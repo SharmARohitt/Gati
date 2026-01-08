@@ -30,7 +30,7 @@ import {
   AnimatedCounter
 } from '@/components/ui'
 import { formatNumber, formatDateTime } from '@/lib/utils'
-import { useAuth } from '@/lib/auth/authContext'
+import { useAuth } from '@/components/auth/AuthProviderWrapper'
 
 // Types for real data
 interface NationalOverview {
@@ -119,32 +119,6 @@ export default function AdminDashboard() {
             Admin Command Center
           </h1>
           <p className="text-gati-muted">Real-time Aadhaar data from {overview?.statesCount || 0} states</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => fetchData()}
-            disabled={refreshing}
-            className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-          >
-            <RefreshCw className={`w-4 h-4 text-gati-muted ${refreshing ? 'animate-spin' : ''}`} />
-            <span className="text-sm text-gati-text">{refreshing ? 'Refreshing...' : 'Refresh'}</span>
-          </button>
-          <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-gray-200">
-            <PulsingDot color="bg-emerald-500" />
-            <span className="text-sm font-medium text-gati-text">Live Data</span>
-          </div>
-          {/* User Info & Logout */}
-          <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gati-saffron/10 to-gati-green/10 rounded-lg border border-gati-saffron/20">
-            <Shield className="w-4 h-4 text-gati-saffron" />
-            <span className="text-sm font-medium text-gati-blue">{user?.username || 'Admin'}</span>
-          </div>
-          <button
-            onClick={logout}
-            className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg border border-red-200 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="text-sm font-medium">Logout</span>
-          </button>
         </div>
       </div>
 
