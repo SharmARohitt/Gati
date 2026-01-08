@@ -2,12 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
-// Admin credentials (in production, this would be in a secure database)
-const ADMIN_CREDENTIALS = {
-  username: 'admin',
-  password: 'gati@2024',
-  email: 'admin@gati.gov.in'
-}
+// Credentials are now handled server-side via /api/auth
+// NO hardcoded passwords in client code
 
 interface User {
   username: string
@@ -32,29 +28,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check for existing session on mount
   useEffect(() => {
-    const checkSession = () => {
+    const checkSession = async () => {
       try {
-        const storedSession = localStorage.getItem('gati_admin_session')
-        if (storedSession) {
-          const session = JSON.parse(storedSession)
-          // Check if session is still valid (24 hours)
-          const loginTime = new Date(session.loginTime)
-          const now = new Date()
-          const hoursDiff = (now.getTime() - loginTime.getTime()) / (1000 * 60 * 60)
-          
-          if (hoursDiff < 24) {
-            setUser({
-              ...session,
-              loginTime: new Date(session.loginTime)
-            })
-          } else {
-            // Session expired
-            localStorage.removeItem('gati_admin_session')
-          }
+        // Validate session with server
+        const response = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'validate' })
+        });
+        
+        const data = await response.json();
+        
+        if (data.valid && data.user) {
+          setUser({
+            ...data.user,
+            loginTime: new Date()
+          });
         }
       } catch (error) {
-        console.error('Error checking session:', error)
-        localStorage.removeItem('gati_admin_session')
+        console.error('Error checking session:', error);
       }
       setIsLoading(false)
     }
@@ -63,32 +55,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 800))
-
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      const newUser: User = {
-        username: ADMIN_CREDENTIALS.username,
-        email: ADMIN_CREDENTIALS.email,
-        role: 'admin',
-        loginTime: new Date()
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', username, password })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.user) {
+        const newUser: User = {
+          username: data.user.username,
+          email: data.user.email,
+          role: data.user.role,
+          loginTime: new Date(data.user.loginTime)
+        };
+        
+        setUser(newUser);
+        return { success: true };
       }
       
-      setUser(newUser)
-      localStorage.setItem('gati_admin_session', JSON.stringify(newUser))
-      
-      return { success: true }
-    }
-
-    return { 
-      success: false, 
-      error: 'Invalid credentials. Please check your username and password.' 
+      return { 
+        success: false, 
+        error: data.error || 'Invalid credentials. Please check your username and password.' 
+      };
+    } catch (error) {
+      console.error('Login error:', error);
+      return { 
+        success: false, 
+        error: 'Unable to connect to authentication service.' 
+      };
     }
   }
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem('gati_admin_session')
+  const logout = async () => {
+    try {
+      await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'logout' })
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+    setUser(null);
   }
 
   return (
