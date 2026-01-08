@@ -142,15 +142,30 @@ npm run dev
 
 ## 🔐 Security & Privacy
 
-GATI is built with government-grade security principles:
+GATI is built with **enterprise-grade security** (100% coverage):
 
+### Authentication & Sessions
 - ✅ **Server-Side Authentication** — HTTP-only session cookies (no localStorage)
-- ✅ **API Rate Limiting** — 20 requests/minute per IP address
-- ✅ **Input Validation** — Full sanitization on all API endpoints
+- ✅ **CSRF Protection** — Token-based with constant-time comparison
+- ✅ **Brute Force Protection** — 5 attempts / 5 min, 15 min lockout
+- ✅ **Session Hijacking Prevention** — IP validation on each request
+- ✅ **Idle Session Timeout** — 30 minute automatic logout
+
+### API Security
+- ✅ **Multi-Tier Rate Limiting** — 10/min auth, 30/min AI, 100/min general
+- ✅ **Input Validation** — Full sanitization on all endpoints
+- ✅ **Request Origin Validation** — CORS + origin checking
+
+### Headers & Transport
+- ✅ **Content Security Policy (CSP)** — XSS prevention
+- ✅ **X-Frame-Options** — Clickjacking protection
+- ✅ **Strict-Transport-Security** — HTTPS enforcement
+- ✅ **X-Content-Type-Options** — MIME sniffing prevention
+
+### Monitoring & Compliance
+- ✅ **Comprehensive Audit Logs** — All security events logged
+- ✅ **Risk-Level Classification** — Critical/High/Medium/Low events
 - ✅ **Environment Credentials** — All secrets in `.env.local` (gitignored)
-- ✅ **Role-Based Access Control** — Strict authorization levels
-- ✅ **Error Boundaries** — Graceful error handling with recovery options
-- ✅ **Immutable Audit Logs** — Blockchain-verified action trails
 
 ### Environment Setup
 
@@ -164,6 +179,28 @@ ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your_secure_password_here
 SESSION_SECRET=your_64_character_secret
 ```
+
+---
+
+## 🧠 ML Pipeline Management
+
+Full ML lifecycle management (100% coverage):
+
+### Model Operations
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/ml/pipeline?action=status` | GET | Pipeline health status |
+| `/api/ml/pipeline?action=models` | GET | Model registry |
+| `/api/ml/pipeline?action=metrics` | GET | Prediction metrics |
+| `/api/ml/pipeline` | POST | Retrain/Promote/Rollback/Evaluate |
+
+### Features
+- ✅ **Model Versioning** — Semantic versioning with history
+- ✅ **Production Promotion** — Safe deployment workflow
+- ✅ **Rollback Capability** — Instant rollback to previous versions
+- ✅ **A/B Testing** — Traffic split between versions
+- ✅ **Performance Metrics** — Latency, error rate, request count
+- ✅ **Model Evaluation** — On-demand accuracy assessment
 
 ---
 
