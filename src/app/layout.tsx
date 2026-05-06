@@ -1,8 +1,14 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { AuthProviderWrapper } from '@/components/auth/AuthProviderWrapper'
-import { FloatingChat } from '@/components/ui'
 import { Toaster } from '@/components/ui/Toast'
+import dynamic from 'next/dynamic'
+
+// FloatingChat uses usePathname — must be client-only, no SSR
+const FloatingChat = dynamic(
+  () => import('@/components/ui/FloatingChat').then(m => ({ default: m.FloatingChat })),
+  { ssr: false }
+)
 
 export const metadata: Metadata = {
   title: 'GATI - Governance & Aadhaar Tracking Intelligence',

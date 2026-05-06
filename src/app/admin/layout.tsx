@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Sidebar, TopBar } from '@/components/ui'
 import { useAuth } from '@/components/auth/AuthProviderWrapper'
 
+export const dynamic = 'force-dynamic'
+
 export default function AdminLayout({
   children,
 }: {

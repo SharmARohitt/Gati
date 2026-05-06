@@ -2,13 +2,11 @@
 
 /**
  * GATI Auth Provider — Firebase
- * Replaces Supabase auth entirely
+ * Client-only: Firebase is never initialized during SSR or build.
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
-import { auth } from '@/lib/firebase/config';
-import { firebaseAuth } from '@/lib/firebase/authHelpers';
+import type { User as FirebaseUser } from 'firebase/auth';
 
 // Normalized app user
 interface AppUser {
@@ -35,14 +33,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 function normalizeUser(fbUser: FirebaseUser): AppUser {
   const email = fbUser.email || '';
-  // Use displayName if set (Google auth), otherwise format email nicely
-  // e.g. "sharmaa.rohit2005@gmail.com" → "Sharmaa Rohit"
   let displayName = fbUser.displayName;
   if (!displayName) {
-    const localPart = email.split('@')[0]; // e.g. "sharmaa.rohit2005"
-    // Remove trailing numbers and split on dots/underscores
+    const localPart = email.split('@')[0];
     const cleaned = localPart.replace(/\d+$/, '').replace(/[._]/g, ' ').trim();
-    // Capitalize each word
     displayName = cleaned.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || email;
   }
   return {
@@ -61,40 +55,62 @@ export function AuthProviderWrapper({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
-      setFirebaseUser(fbUser);
-      setIsLoading(false);
+    // Import Firebase lazily — only runs in browser, never during SSR/build
+    let unsubscribe: (() => void) | undefined;
+
+    import('firebase/auth').then(({ onAuthStateChanged }) => {
+      import('@/lib/firebase/config').then(({ auth }) => {
+        unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+          setFirebaseUser(fbUser);
+          setIsLoading(false);
+        });
+      });
     });
-    return () => unsubscribe();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    const { data, error } = await firebaseAuth.signIn(email, password);
-    if (error) {
-      // Make Firebase error messages user-friendly
-      const msg = error.message.includes('wrong-password') || error.message.includes('invalid-credential')
-        ? 'Invalid email or password.'
-        : error.message.includes('user-not-found')
-        ? 'No account found with this email.'
-        : error.message.includes('too-many-requests')
-        ? 'Too many attempts. Please try again later.'
-        : 'Login failed. Please try again.';
-      return { success: false, error: msg };
+    try {
+      const { firebaseAuth } = await import('@/lib/firebase/authHelpers');
+      const { data, error } = await firebaseAuth.signIn(email, password);
+      if (error) {
+        const msg = error.message.includes('wrong-password') || error.message.includes('invalid-credential')
+          ? 'Invalid email or password.'
+          : error.message.includes('user-not-found')
+          ? 'No account found with this email.'
+          : error.message.includes('too-many-requests')
+          ? 'Too many attempts. Please try again later.'
+          : 'Login failed. Please try again.';
+        return { success: false, error: msg };
+      }
+      return { success: !!data };
+    } catch {
+      return { success: false, error: 'Login failed. Please try again.' };
     }
-    return { success: !!data };
   };
 
   const loginWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
-    const { data, error } = await firebaseAuth.signInWithGoogle();
-    if (error) {
-      if (error.message.includes('popup-closed')) return { success: false, error: 'Sign-in cancelled.' };
+    try {
+      const { firebaseAuth } = await import('@/lib/firebase/authHelpers');
+      const { data, error } = await firebaseAuth.signInWithGoogle();
+      if (error) {
+        if (error.message.includes('popup-closed')) return { success: false, error: 'Sign-in cancelled.' };
+        return { success: false, error: 'Google sign-in failed. Please try again.' };
+      }
+      return { success: !!data };
+    } catch {
       return { success: false, error: 'Google sign-in failed. Please try again.' };
     }
-    return { success: !!data };
   };
 
   const logout = async () => {
-    await firebaseAuth.signOut();
+    try {
+      const { firebaseAuth } = await import('@/lib/firebase/authHelpers');
+      await firebaseAuth.signOut();
+    } catch { /* ignore */ }
   };
 
   const user = firebaseUser ? normalizeUser(firebaseUser) : null;

@@ -1,25 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Skip type-checking during build (run tsc --noEmit separately)
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  // Skip type-checking during build
+  typescript: { ignoreBuildErrors: true },
   // Skip ESLint during build
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  eslint: { ignoreDuringBuilds: true },
+
   // Image domains
   images: {
-    domains: [
-      'api.mapbox.com',
-      'tiles.mapbox.com',
-      'lh3.googleusercontent.com',
-    ],
+    domains: ['api.mapbox.com', 'tiles.mapbox.com', 'lh3.googleusercontent.com'],
   },
-  // Required for Three.js / React Three Fiber
+
+  // Required for Three.js
   transpilePackages: ['three', '@react-three/fiber', '@react-three/drei'],
-  // Webpack: handle Node.js built-ins used by CSV parser (fs, path)
-  // These are only used in API routes (server-side), never in client bundles
+
+  // Webpack: handle Node.js built-ins (fs/path used by CSV parser in API routes only)
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -27,6 +21,9 @@ const nextConfig = {
         fs: false,
         path: false,
         os: false,
+        net: false,
+        tls: false,
+        crypto: false,
       };
     }
     return config;
