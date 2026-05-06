@@ -4,6 +4,8 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { WifiOff, RefreshCw, Home, ArrowLeft } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default function OfflinePage() {
   const handleRefresh = () => {
     window.location.reload()

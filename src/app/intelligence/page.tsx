@@ -90,6 +90,8 @@ interface ChatMessage {
   isTyping?: boolean
 }
 
+export const dynamic = 'force-dynamic'
+
 export default function IntelligencePage() {
   const [selectedCapability, setSelectedCapability] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)

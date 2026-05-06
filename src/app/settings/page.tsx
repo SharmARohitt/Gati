@@ -26,6 +26,8 @@ import {
 import { useAuth } from '@/components/auth/AuthProviderWrapper';
 import { firebaseAuth } from '@/lib/firebase/authHelpers';
 
+export const dynamic = 'force-dynamic'
+
 export default function SettingsPage() {
   const router = useRouter();
   const { user, isLoading, isAuthenticated } = useAuth();

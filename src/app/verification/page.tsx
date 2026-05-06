@@ -31,6 +31,8 @@ import {
   Footer
 } from '@/components/ui'
 
+export const dynamic = 'force-dynamic'
+
 type InvestigationType = 'pattern' | 'anomaly' | 'duplicate'
 
 interface SearchResult {

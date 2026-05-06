@@ -15,6 +15,8 @@ import {
 import { useAuth } from '@/components/auth/AuthProviderWrapper';
 import { firebaseAuth } from '@/lib/firebase/authHelpers';
 
+export const dynamic = 'force-dynamic'
+
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');

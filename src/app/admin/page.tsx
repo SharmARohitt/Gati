@@ -13,6 +13,8 @@ import { IndiaMap, SeverityBadge, AnimatedCounter } from '@/components/ui'
 import { formatLargeNumber, formatDateTime } from '@/lib/utils'
 import { useAuth } from '@/components/auth/AuthProviderWrapper'
 
+export const dynamic = 'force-dynamic'
+
 interface NationalOverview {
   totalEnrolments: number
   totalBiometricUpdates: number

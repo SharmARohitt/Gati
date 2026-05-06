@@ -30,6 +30,8 @@ import {
 import { auditRecords } from '@/lib/data'
 import { formatDateTime, generateHash } from '@/lib/utils'
 
+export const dynamic = 'force-dynamic'
+
 export default function AuditPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRecord, setSelectedRecord] = useState<typeof auditRecords[0] | null>(null)

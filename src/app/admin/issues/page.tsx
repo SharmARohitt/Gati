@@ -29,6 +29,8 @@ import { detectedIssues, fieldOfficers } from '@/lib/data'
 import { formatDate } from '@/lib/utils'
 import { toastSuccess, toastInfo } from '@/components/ui/Toast'
 
+export const dynamic = 'force-dynamic'
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type IssueStatus = 'pending' | 'assigned' | 'in-progress' | 'resolved'

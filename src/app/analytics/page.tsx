@@ -262,6 +262,8 @@ const ALL_STATES = [
   { code: 'WB', name: 'West Bengal' }
 ]
 
+export const dynamic = 'force-dynamic'
+
 export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)

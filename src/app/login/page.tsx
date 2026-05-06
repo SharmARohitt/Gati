@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProviderWrapper';
 
+export const dynamic = 'force-dynamic'
+
 // Inner component that uses useSearchParams (must be inside Suspense)
 function LoginForm() {
   const [email, setEmail] = useState('');

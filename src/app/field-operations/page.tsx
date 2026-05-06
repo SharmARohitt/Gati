@@ -32,6 +32,8 @@ import {
 import { fieldOfficers } from '@/lib/data'
 import { formatIndianNumber } from '@/lib/utils'
 
+export const dynamic = 'force-dynamic'
+
 export default function FieldOperationsPage() {
   const [selectedOfficer, setSelectedOfficer] = useState<typeof fieldOfficers[0] | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')

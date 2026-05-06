@@ -29,6 +29,8 @@ import {
 } from '@/components/ui'
 import { pulseStripData } from '@/lib/data'
 
+export const dynamic = 'force-dynamic'
+
 export default function LandingPage() {
   const { scrollY } = useScroll()
   const navBg = useTransform(scrollY, [0, 60], ['rgba(255,255,255,0)', 'rgba(255,255,255,0.95)'])

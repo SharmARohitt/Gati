@@ -17,6 +17,8 @@ import {
 import { timelineData } from '@/lib/data'
 import { formatIndianNumber } from '@/lib/utils'
 
+export const dynamic = 'force-dynamic'
+
 type MapMode = 'health' | 'saturation' | 'freshness' | 'risk' | 'political'
 
 interface StateData {
