@@ -1,32 +1,47 @@
-# Dependencies
-node_modules/
-.pnp/
-.pnp.js
+# ============================================================
+# GATI — .gitignore
+# ============================================================
 
-# Build outputs
+# ── Node / npm ────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Next.js build ─────────────────────────────────────────────
 .next/
 out/
 build/
 dist/
 
-# Environment variables - IMPORTANT: Never commit these
+# ── Environment files — NEVER commit these ───────────────────
+# .env.local        ← your real secrets (Firebase, NVIDIA, Gemini)
+# .env.development  ← only NODE_OPTIONS, but keep local anyway
 .env
 .env.local
+.env.development
 .env.development.local
+.env.test
 .env.test.local
+.env.production
 .env.production.local
-.env*.local
+# .env.example is intentionally NOT ignored — it's a safe template
 
-# API Keys and Secrets
+# ── API keys / secrets (extra safety net) ────────────────────
 *.pem
 *.key
+*.p12
+*.pfx
 secrets/
-config/secrets.json
 **/secrets.json
 **/*_key.txt
 **/*_secret.txt
+**/*_token.txt
+.secret*
 
-# Python ML artifacts
+# ── Python ML artifacts ───────────────────────────────────────
 ml/models/**/model.joblib
 ml/models/**/metadata.json
 ml/models/registry.json
@@ -36,29 +51,42 @@ ml/__pycache__/
 ml/**/__pycache__/
 *.pyc
 *.pyo
+*.pyd
 .pytest_cache/
 .mypy_cache/
+*.egg-info/
+dist/
+.venv/
+venv/
+env/
 
-# Debug logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# IDE and Editor
+# ── IDE / Editor ──────────────────────────────────────────────
 .idea/
 .vscode/
 *.swp
 *.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 .DS_Store
+Thumbs.db
 
-# Testing
+# ── Testing / Coverage ────────────────────────────────────────
 coverage/
 .nyc_output/
+*.lcov
 
-# TypeScript
+# ── TypeScript ────────────────────────────────────────────────
 *.tsbuildinfo
 next-env.d.ts
 
-# Misc
+# ── Logs ──────────────────────────────────────────────────────
 *.log
+logs/
+
+# ── Misc ──────────────────────────────────────────────────────
 .vercel
+.turbo
+*.tgz

@@ -1,15 +1,16 @@
 'use client';
 
 /**
- * GATI Auth Provider Wrapper
- * Wraps the application with Supabase authentication context
+ * GATI Auth Provider — Firebase
+ * Replaces Supabase auth entirely
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabaseAuth, getSupabaseClient } from '@/lib/supabase/client';
-import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
+import { auth } from '@/lib/firebase/config';
+import { firebaseAuth } from '@/lib/firebase/authHelpers';
 
-// Normalized user type for the app
+// Normalized app user
 interface AppUser {
   id: string;
   username: string;
@@ -17,124 +18,96 @@ interface AppUser {
   role: 'admin' | 'user' | 'viewer';
   fullName: string;
   avatarUrl?: string;
+  photoURL?: string;
 }
 
 interface AuthContextType {
   user: AppUser | null;
-  supabaseUser: SupabaseUser | null;
-  session: Session | null;
+  firebaseUser: FirebaseUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper to normalize Supabase user to app user
-function normalizeUser(supabaseUser: SupabaseUser | null): AppUser | null {
-  if (!supabaseUser) return null;
-  
-  const email = supabaseUser.email || '';
-  const metadata = supabaseUser.user_metadata || {};
-  
+function normalizeUser(fbUser: FirebaseUser): AppUser {
+  const email = fbUser.email || '';
+  // Use displayName if set (Google auth), otherwise format email nicely
+  // e.g. "sharmaa.rohit2005@gmail.com" → "Sharmaa Rohit"
+  let displayName = fbUser.displayName;
+  if (!displayName) {
+    const localPart = email.split('@')[0]; // e.g. "sharmaa.rohit2005"
+    // Remove trailing numbers and split on dots/underscores
+    const cleaned = localPart.replace(/\d+$/, '').replace(/[._]/g, ' ').trim();
+    // Capitalize each word
+    displayName = cleaned.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || email;
+  }
   return {
-    id: supabaseUser.id,
-    username: metadata.full_name || email.split('@')[0] || 'User',
-    email: email,
-    role: metadata.role || 'user',
-    fullName: metadata.full_name || email.split('@')[0] || 'User',
-    avatarUrl: metadata.avatar_url,
+    id: fbUser.uid,
+    username: displayName,
+    email,
+    role: 'admin',
+    fullName: displayName,
+    avatarUrl: fbUser.photoURL || undefined,
+    photoURL: fbUser.photoURL || undefined,
   };
 }
 
 export function AuthProviderWrapper({ children }: { children: ReactNode }) {
-  const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize auth state and listen for changes
   useEffect(() => {
-    const supabase = getSupabaseClient();
-    
-    // Get initial session
-    const initializeAuth = async () => {
-      try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        setSession(currentSession);
-        setSupabaseUser(currentSession?.user ?? null);
-      } catch (error) {
-        console.error('Error getting session:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
-        setSession(newSession);
-        setSupabaseUser(newSession?.user ?? null);
-        setIsLoading(false);
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+      setFirebaseUser(fbUser);
+      setIsLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    try {
-      const { data, error } = await supabaseAuth.signIn(email, password);
-      
-      if (error) {
-        return { 
-          success: false, 
-          error: error.message || 'Invalid credentials' 
-        };
-      }
-      
-      if (data?.user) {
-        return { success: true };
-      }
-      
-      return { 
-        success: false, 
-        error: 'Authentication failed' 
-      };
-    } catch (error) {
-      console.error('Login error:', error);
-      return { 
-        success: false, 
-        error: 'Unable to connect to authentication service' 
-      };
+    const { data, error } = await firebaseAuth.signIn(email, password);
+    if (error) {
+      // Make Firebase error messages user-friendly
+      const msg = error.message.includes('wrong-password') || error.message.includes('invalid-credential')
+        ? 'Invalid email or password.'
+        : error.message.includes('user-not-found')
+        ? 'No account found with this email.'
+        : error.message.includes('too-many-requests')
+        ? 'Too many attempts. Please try again later.'
+        : 'Login failed. Please try again.';
+      return { success: false, error: msg };
     }
+    return { success: !!data };
+  };
+
+  const loginWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
+    const { data, error } = await firebaseAuth.signInWithGoogle();
+    if (error) {
+      if (error.message.includes('popup-closed')) return { success: false, error: 'Sign-in cancelled.' };
+      return { success: false, error: 'Google sign-in failed. Please try again.' };
+    }
+    return { success: !!data };
   };
 
   const logout = async () => {
-    try {
-      await supabaseAuth.signOut();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-    setSupabaseUser(null);
-    setSession(null);
+    await firebaseAuth.signOut();
   };
 
-  const user = normalizeUser(supabaseUser);
+  const user = firebaseUser ? normalizeUser(firebaseUser) : null;
 
   return (
     <AuthContext.Provider value={{
       user,
-      supabaseUser,
-      session,
-      isAuthenticated: !!session,
+      firebaseUser,
+      isAuthenticated: !!firebaseUser,
       isLoading,
       login,
-      logout
+      loginWithGoogle,
+      logout,
     }}>
       {children}
     </AuthContext.Provider>

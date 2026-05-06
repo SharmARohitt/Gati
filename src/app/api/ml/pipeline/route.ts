@@ -1,36 +1,22 @@
 /**
  * GATI ML Pipeline Management API
- * Comprehensive ML model management, monitoring, and operations
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 const ML_API_URL = process.env.ML_API_URL || 'http://localhost:8000';
 
-// Model registry cache
-interface ModelInfo {
-  name: string;
-  version: string;
-  status: 'active' | 'inactive' | 'training' | 'failed';
-  isProduction: boolean;
-  accuracy: number;
-  lastTrained: string;
-  trainingDuration: number;
-  metrics: Record<string, number>;
-}
-
-interface ModelMetrics {
+// In-memory metrics
+const modelMetrics = new Map<string, {
   requestCount: number;
   avgLatency: number;
   errorRate: number;
   lastPrediction: string;
   predictions24h: number;
-}
+}>();
 
-// In-memory metrics (in production, use Redis/TimescaleDB)
-const modelMetrics = new Map<string, ModelMetrics>();
-
-// Initialize default metrics
 ['anomaly_detector', 'risk_scorer', 'forecaster'].forEach(model => {
   modelMetrics.set(model, {
     requestCount: 0,
@@ -40,23 +26,6 @@ const modelMetrics = new Map<string, ModelMetrics>();
     predictions24h: 0
   });
 });
-
-/**
- * Record prediction metrics
- */
-export function recordPrediction(modelName: string, latency: number, success: boolean): void {
-  const metrics = modelMetrics.get(modelName);
-  if (!metrics) return;
-  
-  metrics.requestCount++;
-  metrics.predictions24h++;
-  metrics.avgLatency = (metrics.avgLatency * (metrics.requestCount - 1) + latency) / metrics.requestCount;
-  metrics.lastPrediction = new Date().toISOString();
-  
-  if (!success) {
-    metrics.errorRate = ((metrics.errorRate * (metrics.requestCount - 1)) + 1) / metrics.requestCount;
-  }
-}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

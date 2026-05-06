@@ -15,13 +15,17 @@
   --gati-surface: #FFFFFF;
   --gati-text: #1A1A2E;
   --gati-muted: #6B7280;
-  
+  --gati-border: #E5E7EB;
+  --gati-bg: #F0F4F8;
+  --gati-card: #FFFFFF;
+  --gati-input-bg: #F9FAFB;
+
   /* Semantic colors */
   --success: #10B981;
   --warning: #F59E0B;
   --danger: #EF4444;
   --critical: #DC2626;
-  
+
   /* Grid background */
   --grid-color: rgba(10, 36, 99, 0.03);
 }

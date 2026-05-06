@@ -24,7 +24,7 @@ import {
   Globe
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProviderWrapper';
-import { supabaseAuth } from '@/lib/supabase/client';
+import { firebaseAuth } from '@/lib/firebase/authHelpers';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -60,17 +60,17 @@ export default function SettingsPage() {
     setMessage(null);
 
     try {
-      const { error } = await supabaseAuth.updateProfile({
-        full_name: fullName,
-      });
-
-      if (error) {
-        setMessage({ type: 'error', text: error.message });
-      } else {
+      // Firebase: update display name via updateProfile
+      const fbUser = firebaseAuth.getCurrentUser();
+      if (fbUser) {
+        const { updateProfile } = await import('firebase/auth');
+        await updateProfile(fbUser, { displayName: fullName });
         setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      } else {
+        setMessage({ type: 'error', text: 'Not authenticated' });
       }
-    } catch {
-      setMessage({ type: 'error', text: 'Failed to update profile' });
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err?.message || 'Failed to update profile' });
     } finally {
       setIsSaving(false);
     }
@@ -94,12 +94,11 @@ export default function SettingsPage() {
     }
 
     try {
-      const { error } = await supabaseAuth.updatePassword(newPassword);
-
+      const { error } = await firebaseAuth.resetPassword(email);
       if (error) {
         setMessage({ type: 'error', text: error.message });
       } else {
-        setMessage({ type: 'success', text: 'Password updated successfully!' });
+        setMessage({ type: 'success', text: 'Password reset email sent! Check your inbox.' });
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');

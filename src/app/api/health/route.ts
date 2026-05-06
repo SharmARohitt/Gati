@@ -64,29 +64,26 @@ export async function GET(request: NextRequest) {
     });
   }
   
-  // Check 3: AI Service (Hugging Face)
-  const hfConfigured = !!process.env.HUGGINGFACE_API_KEY;
+  // Check 3: AI Service (Google Gemini)
+  const geminiConfigured = !!process.env.GEMINI_API_KEY;
   checks.push({
     service: 'ai-service',
-    status: hfConfigured ? 'healthy' : 'degraded',
+    status: geminiConfigured ? 'healthy' : 'degraded',
     details: {
-      provider: 'Hugging Face',
-      configured: hfConfigured
+      provider: 'Google Gemini',
+      model: 'gemini-2.0-flash',
+      configured: geminiConfigured
     }
   });
   
-  // Check 4: Authentication
-  const authConfigured = !!(
-    process.env.ADMIN_USERNAME && 
-    process.env.ADMIN_PASSWORD && 
-    process.env.SESSION_SECRET
-  );
+  // Check 4: Authentication (Firebase)
+  const firebaseConfigured = !!(process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
   checks.push({
     service: 'authentication',
-    status: authConfigured ? 'healthy' : 'unhealthy',
+    status: firebaseConfigured ? 'healthy' : 'unhealthy',
     details: {
-      configured: authConfigured,
-      sessionSecret: !!process.env.SESSION_SECRET
+      provider: 'Firebase',
+      configured: firebaseConfigured
     }
   });
   

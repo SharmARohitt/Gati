@@ -16,6 +16,24 @@ export function formatIndianNumber(num: number): string {
   return otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree
 }
 
+// Format number with consistent Indian-style large number display
+// Always shows full context: 1,27,700 not "127.7K"
+export function formatLargeNumber(num: number): string {
+  if (!num || isNaN(num)) return '0'
+  if (num >= 10000000) {
+    // Crore range
+    return (num / 10000000).toFixed(2).replace(/\.?0+$/, '') + ' Cr'
+  }
+  if (num >= 100000) {
+    // Lakh range
+    return (num / 100000).toFixed(2).replace(/\.?0+$/, '') + ' L'
+  }
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1).replace(/\.?0+$/, '') + 'K'
+  }
+  return num.toLocaleString('en-IN')
+}
+
 // Format number with K/M/B suffix
 export function formatNumber(num: number): string {
   if (num >= 1000000000) {

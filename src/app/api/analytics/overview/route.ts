@@ -26,7 +26,7 @@ export async function GET() {
     const store = getDataStore();
     
     // Ensure data is loaded
-    await store.loadAllData();
+    await store.waitForData();
     
     const overview = store.getNationalOverview();
     

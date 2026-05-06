@@ -3,8 +3,20 @@
 import React, { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ZoomIn, ZoomOut, RotateCcw, Layers, MapPin, TrendingUp, Users, AlertTriangle } from 'lucide-react'
-import { stateData } from '@/lib/data'
+import { stateData as mockStateData } from '@/lib/data'
 import { formatIndianNumber } from '@/lib/utils'
+
+interface RealStateData {
+  stateCode: string
+  stateName: string
+  coverage: number
+  freshness: number
+  riskLevel: 'low' | 'medium' | 'high' | 'critical'
+  totalEnrolments: number
+  totalBiometricUpdates: number
+  totalDemographicUpdates: number
+  ageDistribution?: { infants: number; children: number; adults: number }
+}
 
 // Detailed India states SVG path data - accurate geographic representation
 const indiaStatesData = [
@@ -281,13 +293,15 @@ interface IndiaMapProps {
   onStateClick?: (stateId: string) => void
   showLabels?: boolean
   interactive?: boolean
+  statesData?: RealStateData[]
 }
 
 export function IndiaMap({ 
   mode = 'health', 
   onStateClick,
   showLabels = true,
-  interactive = true 
+  interactive = true,
+  statesData = []
 }: IndiaMapProps) {
   const [selectedState, setSelectedState] = useState<string | null>(null)
   const [hoveredState, setHoveredState] = useState<string | null>(null)
@@ -295,64 +309,59 @@ export function IndiaMap({
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const getStateColor = (stateId: string) => {
-    const state = stateData.find(s => s.id === stateId)
-    
-    // Political mode doesn't need data
-    if (mode === 'political') {
-      return politicalColors[stateId] || 'fill-slate-200'
-    }
-
-    if (!state) return 'fill-slate-200'
-    
-    if (mode === 'risk') {
-      const riskColors = {
-        low: 'fill-emerald-400',
-        medium: 'fill-amber-400',
-        high: 'fill-orange-500',
-        critical: 'fill-red-500'
+  // Helper: get real data for a state by code, fallback to mock
+  const getStateData = (stateId: string) => {
+    // Try real data first
+    if (statesData.length > 0) {
+      const real = statesData.find(s => s.stateCode === stateId)
+      if (real) return {
+        coverage: real.coverage,
+        freshness: real.freshness,
+        risk: real.riskLevel,
+        enrolments: real.totalEnrolments,
+        updates: real.totalBiometricUpdates + real.totalDemographicUpdates,
+        name: real.stateName,
       }
+    }
+    // Fallback to mock
+    const mock = mockStateData.find(s => s.id === stateId)
+    if (mock) return { coverage: mock.coverage, freshness: mock.freshness, risk: mock.risk, enrolments: mock.enrolments, updates: mock.updates, name: mock.name }
+    return null
+  }
+
+  const getStateColor = (stateId: string) => {
+    if (mode === 'political') return politicalColors[stateId] || 'fill-slate-200'
+    const state = getStateData(stateId)
+    if (!state) return 'fill-slate-200'
+    if (mode === 'risk') {
+      const riskColors = { low: 'fill-emerald-400', medium: 'fill-amber-400', high: 'fill-orange-500', critical: 'fill-red-500' }
       return riskColors[state.risk as keyof typeof riskColors] || 'fill-slate-200'
     }
-    
     if (mode === 'health' || mode === 'saturation') {
-      const coverage = state.coverage
-      if (coverage >= 98) return 'fill-emerald-500'
-      if (coverage >= 95) return 'fill-cyan-500'
-      if (coverage >= 90) return 'fill-amber-500'
+      const c = state.coverage
+      if (c >= 98) return 'fill-emerald-500'
+      if (c >= 95) return 'fill-cyan-500'
+      if (c >= 90) return 'fill-amber-500'
       return 'fill-red-500'
     }
-    
     if (mode === 'freshness') {
-      const freshness = state.freshness
-      if (freshness >= 95) return 'fill-emerald-500'
-      if (freshness >= 90) return 'fill-cyan-500'
-      if (freshness >= 85) return 'fill-amber-500'
+      const f = state.freshness
+      if (f >= 95) return 'fill-emerald-500'
+      if (f >= 90) return 'fill-cyan-500'
+      if (f >= 85) return 'fill-amber-500'
       return 'fill-red-500'
     }
-    
     return 'fill-gati-light'
   }
 
   const getHoverColor = (stateId: string) => {
-    const state = stateData.find(s => s.id === stateId)
+    const state = getStateData(stateId)
     if (!state) return 'fill-slate-300'
-    
     if (mode === 'risk') {
-      const riskColors = {
-        low: 'fill-emerald-300',
-        medium: 'fill-amber-300',
-        high: 'fill-orange-400',
-        critical: 'fill-red-400'
-      }
+      const riskColors = { low: 'fill-emerald-300', medium: 'fill-amber-300', high: 'fill-orange-400', critical: 'fill-red-400' }
       return riskColors[state.risk as keyof typeof riskColors] || 'fill-slate-300'
     }
-    
     return 'fill-gati-accent'
-  }
-
-  const getStateData = (stateId: string) => {
-    return stateData.find(s => s.id === stateId)
   }
 
   const handleStateClick = (stateId: string) => {
@@ -555,7 +564,6 @@ export function IndiaMap({
           {indiaStatesData.map((state, index) => {
             const isHovered = hoveredState === state.id
             const isSelected = selectedState === state.id
-            const hasData = stateData.some(s => s.id === state.id)
             
             return (
               <g key={state.id}>

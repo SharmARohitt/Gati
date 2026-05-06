@@ -12,7 +12,7 @@ export async function GET(
 ) {
   try {
     const store = getDataStore();
-    await store.loadAllData();
+    await store.waitForData();
     
     const { stateCode } = params;
     

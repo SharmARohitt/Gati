@@ -31,7 +31,8 @@ import {
   ArrowUpRight,
   Eye,
   FileText,
-  Download
+  Download,
+  X
 } from 'lucide-react'
 import { 
   AnimatedGrid,
@@ -39,6 +40,7 @@ import {
   ProgressBar,
   Footer
 } from '@/components/ui'
+import { stripMarkdown } from '@/lib/utils/stripMarkdown'
 
 // AI Response types
 interface AIInsight {
@@ -92,6 +94,7 @@ export default function IntelligencePage() {
   const [selectedCapability, setSelectedCapability] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [activeInsights, setActiveInsights] = useState<AIInsight[]>([])
+  const [selectedInsight, setSelectedInsight] = useState<AIInsight | null>(null)
   const [liveStats, setLiveStats] = useState({
     predictions: 12847,
     accuracy: 94.2,
@@ -237,7 +240,7 @@ export default function IntelligencePage() {
         id: (Date.now() + 1).toString(),
         role: 'ai',
         content: data.success 
-          ? data.response 
+          ? stripMarkdown(data.response)
           : 'I apologize, but I encountered an error processing your request. Please try again.',
         timestamp: new Date()
       }
@@ -438,12 +441,15 @@ export default function IntelligencePage() {
                 {activeInsights.slice(0, 3).map((insight, index) => {
                   const TypeIcon = getTypeIcon(insight.type)
                   return (
-                    <motion.div
+                    <motion.button
                       key={insight.id}
-                      className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20"
+                      className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 text-left hover:bg-white/20 transition-all cursor-pointer w-full"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setSelectedInsight(insight)}
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
@@ -462,7 +468,11 @@ export default function IntelligencePage() {
                           {insight.region}
                         </div>
                       )}
-                    </motion.div>
+                      <div className="flex items-center gap-1 mt-3 text-xs text-purple-400">
+                        <Eye className="w-3 h-3" />
+                        <span>Click for full report</span>
+                      </div>
+                    </motion.button>
                   )
                 })}
               </div>
@@ -881,6 +891,116 @@ export default function IntelligencePage() {
 
       {/* Footer */}
       <Footer />
+
+      {/* ── Insight Detail Modal ── */}
+      <AnimatePresence>
+        {selectedInsight && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedInsight(null)}
+          >
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+            <motion.div
+              className="relative w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden"
+              style={{ background: 'var(--gati-card, #fff)' }}
+              initial={{ scale: 0.92, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 16 }}
+              transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="bg-gradient-to-r from-[#0A2463] to-[#1E5AA8] p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${getSeverityColor(selectedInsight.severity)}`}>
+                        {selectedInsight.severity || 'info'}
+                      </span>
+                      <span className="text-white/60 text-xs">{selectedInsight.confidence}% confidence</span>
+                    </div>
+                    <h2 className="text-xl font-bold text-white">{selectedInsight.title}</h2>
+                    {selectedInsight.region && (
+                      <div className="flex items-center gap-1 mt-1 text-white/70 text-sm">
+                        <MapPin className="w-3.5 h-3.5" />
+                        {selectedInsight.region}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setSelectedInsight(null)}
+                    className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="p-5 space-y-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--gati-muted)' }}>
+                    Analysis
+                  </p>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--gati-text)' }}>
+                    {selectedInsight.content}
+                  </p>
+                </div>
+
+                {/* Confidence bar */}
+                <div>
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span style={{ color: 'var(--gati-muted)' }}>Model Confidence</span>
+                    <span className="font-semibold" style={{ color: 'var(--gati-text)' }}>{selectedInsight.confidence}%</span>
+                  </div>
+                  <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--gati-border)' }}>
+                    <motion.div
+                      className="h-full rounded-full bg-gradient-to-r from-[#0A2463] to-[#00B4D8]"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${selectedInsight.confidence}%` }}
+                      transition={{ duration: 0.6, ease: 'easeOut' }}
+                    />
+                  </div>
+                </div>
+
+                {/* What this means */}
+                <div className="rounded-xl p-4" style={{ background: 'var(--gati-bg, #f8fafc)', border: '1px solid var(--gati-border)' }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Brain className="w-4 h-4 text-purple-500" />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--gati-text)' }}>What this means for governance</span>
+                  </div>
+                  <p className="text-xs leading-relaxed" style={{ color: 'var(--gati-muted)' }}>
+                    {selectedInsight.type === 'prediction' && 'This forecast is based on historical patterns from your CSV data. Use it to pre-position resources and plan field operations before the predicted surge occurs.'}
+                    {selectedInsight.type === 'anomaly' && 'This anomaly was detected by comparing current patterns against historical baselines. Immediate field verification is recommended to determine if this is a data quality issue or a genuine operational concern.'}
+                    {selectedInsight.type === 'recommendation' && 'This recommendation is derived from cross-state pattern analysis. Implementing it proactively can prevent escalation to a high-risk situation.'}
+                    {selectedInsight.type === 'alert' && 'This alert requires immediate attention. Review the affected region\'s data and coordinate with the district officer for on-ground verification.'}
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    className="flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#0A2463] to-[#1E5AA8] hover:opacity-90 transition-opacity"
+                    onClick={() => setSelectedInsight(null)}
+                  >
+                    Acknowledge
+                  </button>
+                  <button
+                    className="flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold border transition-colors"
+                    style={{ borderColor: 'var(--gati-border)', color: 'var(--gati-text)' }}
+                    onClick={() => setSelectedInsight(null)}
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   )
 }

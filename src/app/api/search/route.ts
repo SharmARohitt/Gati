@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   try {
     const store = getDataStore();
-    await store.loadAllData();
+    await store.waitForData();
     
     const { searchParams } = new URL(request.url);
     const pincode = searchParams.get('pincode');

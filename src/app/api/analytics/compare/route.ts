@@ -23,7 +23,7 @@ interface ComparisonItem {
 export async function GET(request: Request) {
   try {
     const store = getDataStore();
-    await store.loadAllData();
+    await store.waitForData();
     
     const { searchParams } = new URL(request.url);
     const statesParam = searchParams.get('states');

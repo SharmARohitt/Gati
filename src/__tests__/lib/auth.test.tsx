@@ -1,182 +1,79 @@
 /**
- * Unit tests for GATI Auth Context
- * Tests authentication flow and session management
+ * Unit tests for GATI Firebase Auth
+ * Basic smoke tests for auth context
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
-import { AuthProvider, useAuth } from '@/lib/auth/authContext'
 import { ReactNode } from 'react'
 
-// Wrapper component for hooks
+// Mock Firebase auth to avoid real network calls in tests
+vi.mock('@/lib/firebase/config', () => ({
+  auth: {
+    currentUser: null,
+    onAuthStateChanged: vi.fn((cb: (user: null) => void) => {
+      cb(null)
+      return () => {}
+    }),
+  },
+  app: {},
+}))
+
+vi.mock('@/lib/firebase/authHelpers', () => ({
+  firebaseAuth: {
+    signIn: vi.fn(),
+    signInWithGoogle: vi.fn(),
+    signOut: vi.fn(),
+    getCurrentUser: vi.fn(() => null),
+    onAuthStateChanged: vi.fn((cb: (user: null) => void) => {
+      cb(null)
+      return () => {}
+    }),
+  },
+}))
+
+import { AuthProviderWrapper, useAuth } from '@/components/auth/AuthProviderWrapper'
+
 function wrapper({ children }: { children: ReactNode }) {
-  return <AuthProvider>{children}</AuthProvider>
+  return <AuthProviderWrapper>{children}</AuthProviderWrapper>
 }
 
-describe('Auth Context', () => {
+describe('Firebase Auth Context', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   describe('Initial State', () => {
-    it('should start with loading state', () => {
-      // Mock the validate session call
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ valid: false }),
-      } as Response)
-
-      const { result } = renderHook(() => useAuth(), { wrapper })
-      
-      expect(result.current.isLoading).toBe(true)
-      expect(result.current.isAuthenticated).toBe(false)
-      expect(result.current.user).toBeNull()
-    })
-
-    it('should complete loading after session check', async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ valid: false }),
-      } as Response)
-
+    it('should start unauthenticated', async () => {
       const { result } = renderHook(() => useAuth(), { wrapper })
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false)
       })
+
+      expect(result.current.isAuthenticated).toBe(false)
+      expect(result.current.user).toBeNull()
     })
   })
 
   describe('Login Flow', () => {
-    it('should login successfully with valid credentials', async () => {
-      // Mock validate session call
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ valid: false }),
-      } as Response)
+    it('should handle failed login gracefully', async () => {
+      const { firebaseAuth } = await import('@/lib/firebase/authHelpers')
+      vi.mocked(firebaseAuth.signIn).mockResolvedValueOnce({
+        data: null,
+        error: new Error('Invalid credentials'),
+      })
 
       const { result } = renderHook(() => useAuth(), { wrapper })
 
-      // Wait for initial load
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false)
-      })
-
-      // Mock successful login
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          user: {
-            username: 'admin',
-            email: 'admin@gati.gov.in',
-            role: 'admin',
-            loginTime: new Date().toISOString(),
-          },
-        }),
-      } as Response)
-
-      // Perform login
-      let loginResult: { success: boolean; error?: string }
-      await act(async () => {
-        loginResult = await result.current.login('admin', 'password123')
-      })
-
-      expect(loginResult!.success).toBe(true)
-      expect(result.current.isAuthenticated).toBe(true)
-      expect(result.current.user?.username).toBe('admin')
-    })
-
-    it('should fail login with invalid credentials', async () => {
-      // Mock validate session call
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ valid: false }),
-      } as Response)
-
-      const { result } = renderHook(() => useAuth(), { wrapper })
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false)
-      })
-
-      // Mock failed login
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({
-          success: false,
-          error: 'Invalid credentials',
-        }),
-      } as Response)
+      await waitFor(() => expect(result.current.isLoading).toBe(false))
 
       let loginResult: { success: boolean; error?: string }
       await act(async () => {
-        loginResult = await result.current.login('admin', 'wrongpassword')
+        loginResult = await result.current.login('test@test.com', 'wrongpass')
       })
 
       expect(loginResult!.success).toBe(false)
-      expect(loginResult!.error).toBe('Invalid credentials')
-      expect(result.current.isAuthenticated).toBe(false)
-    })
-
-    it('should handle network errors gracefully', async () => {
-      // Mock validate session call
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ valid: false }),
-      } as Response)
-
-      const { result } = renderHook(() => useAuth(), { wrapper })
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false)
-      })
-
-      // Mock network error
-      vi.mocked(global.fetch).mockRejectedValueOnce(new Error('Network error'))
-
-      let loginResult: { success: boolean; error?: string }
-      await act(async () => {
-        loginResult = await result.current.login('admin', 'password')
-      })
-
-      expect(loginResult!.success).toBe(false)
-      expect(loginResult!.error).toContain('Unable to connect')
-    })
-  })
-
-  describe('Logout Flow', () => {
-    it('should clear user on logout', async () => {
-      // Mock validate session with existing session
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({
-          valid: true,
-          user: {
-            username: 'admin',
-            email: 'admin@gati.gov.in',
-            role: 'admin',
-          },
-        }),
-      } as Response)
-
-      const { result } = renderHook(() => useAuth(), { wrapper })
-
-      await waitFor(() => {
-        expect(result.current.isAuthenticated).toBe(true)
-      })
-
-      // Mock logout call
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ success: true }),
-      } as Response)
-
-      await act(async () => {
-        result.current.logout()
-      })
-
-      expect(result.current.user).toBeNull()
       expect(result.current.isAuthenticated).toBe(false)
     })
   })

@@ -2,14 +2,14 @@
 
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { 
-  ArrowRight, 
-  Shield, 
-  Brain, 
-  MapPin, 
-  Users, 
-  BarChart3, 
+import { motion, useScroll, useTransform } from 'framer-motion'
+import {
+  ArrowRight,
+  Shield,
+  Brain,
+  MapPin,
+  Users,
+  BarChart3,
   Lock,
   ChevronDown,
   Fingerprint,
@@ -17,10 +17,10 @@ import {
   Zap,
   Globe
 } from 'lucide-react'
-import { 
-  AnimatedCounter, 
-  PulsingDot, 
-  AnimatedGrid, 
+import {
+  AnimatedCounter,
+  PulsingDot,
+  AnimatedGrid,
   FloatingParticles,
   Footer,
   HeroStat,
@@ -30,49 +30,62 @@ import {
 import { pulseStripData } from '@/lib/data'
 
 export default function LandingPage() {
-  const [scrollY, setScrollY] = useState(0)
-
-  useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY)
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  const { scrollY } = useScroll()
+  const navBg = useTransform(scrollY, [0, 60], ['rgba(255,255,255,0)', 'rgba(255,255,255,0.95)'])
+  const navShadow = useTransform(scrollY, [0, 60], ['0 0 0 0 transparent', '0 1px 20px rgba(10,36,99,0.08)'])
 
   return (
     <main className="relative min-h-screen overflow-hidden">
-      {/* Navigation */}
-      <motion.nav 
-        className="fixed top-0 left-0 right-0 z-50 px-6 py-4"
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
+
+      {/* ── Fixed Navigation ── */}
+      <motion.nav
+        className="fixed top-0 left-0 right-0 z-50 px-6 py-3 backdrop-blur-md border-b border-transparent"
+        style={{ backgroundColor: navBg, boxShadow: navShadow }}
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gati-primary to-gati-secondary flex items-center justify-center shadow-gati">
-              <span className="text-white font-bold text-2xl">G</span>
+
+          {/* Logo — smooth, fixed, professional */}
+          <Link href="/" className="flex items-center gap-3 group select-none">
+            <motion.div
+              className="relative w-10 h-10 flex-shrink-0"
+              whileHover={{ scale: 1.06 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+            >
+              {/* Outer glow ring */}
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#0A2463] to-[#00B4D8] opacity-20 blur-sm scale-110" />
+              {/* Main badge */}
+              <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-[#0A2463] to-[#1E5AA8] flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-lg leading-none">G</span>
+              </div>
+            </motion.div>
+            <div className="leading-none">
+              <div className="font-display font-bold text-[#0A2463] text-xl tracking-tight">GATI</div>
+              <div className="text-[10px] text-gray-400 mt-0.5 tracking-wide">Governance & Aadhaar Tracking Intelligence</div>
             </div>
-            <div>
-              <h1 className="font-display font-bold text-gati-primary text-xl">GATI</h1>
-              <p className="text-[10px] text-gati-muted">Governance & Aadhaar Tracking Intelligence</p>
-            </div>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-8">
-            <Link href="/admin" className="text-sm font-medium text-gati-muted hover:text-gati-primary transition-colors">
-              Dashboard
-            </Link>
-            <Link href="/analytics" className="text-sm font-medium text-gati-muted hover:text-gati-primary transition-colors">
-              Analytics & Reports
-            </Link>
-            <Link href="/digital-twin" className="text-sm font-medium text-gati-muted hover:text-gati-primary transition-colors">
-              India Digital Twin
-            </Link>
-            <Link href="/intelligence" className="text-sm font-medium text-gati-muted hover:text-gati-primary transition-colors">
-              AI Intelligence
-            </Link>
-            <Link href="/login" className="gati-btn-primary text-sm">
+          </Link>
+
+          {/* Nav links */}
+          <div className="hidden md:flex items-center gap-7">
+            {[
+              { href: '/admin', label: 'Dashboard' },
+              { href: '/analytics', label: 'Analytics' },
+              { href: '/digital-twin', label: 'Digital Twin' },
+              { href: '/intelligence', label: 'AI Intelligence' },
+            ].map(item => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-sm font-medium text-gray-500 hover:text-[#0A2463] transition-colors duration-150"
+              >
+                {item.label}
+              </Link>
+            ))}
+            <Link
+              href="/login"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-[#0A2463] to-[#1E5AA8] text-white text-sm font-semibold shadow-md hover:shadow-lg hover:opacity-95 transition-all duration-150"
+            >
               Enter Console
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>

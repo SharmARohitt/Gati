@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const store = getDataStore();
-    await store.loadAllData();
+    await store.waitForData();
     
     // Detect anomalies across all states
     const anomalies = store.detectAllAnomalies();
