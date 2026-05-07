@@ -73,6 +73,7 @@ export default function LandingPage() {
               { href: '/analytics', label: 'Analytics' },
               { href: '/digital-twin', label: 'Digital Twin' },
               { href: '/intelligence', label: 'AI Intelligence' },
+              { href: '/pulse', label: 'Gati Pulse' },
             ].map(item => (
               <Link
                 key={item.href}

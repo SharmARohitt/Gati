@@ -7,12 +7,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Map, Brain, AlertTriangle, ShieldCheck,
   Users, FileCheck, BarChart3, Settings, LogOut, ChevronLeft,
-  Bell, Search, RefreshCw, Shield
+  Bell, Search, RefreshCw, Shield, Activity
 } from 'lucide-react'
 import { useAuth } from '@/components/auth/AuthProviderWrapper'
 
 const navigationItems = [
   { id: 'dashboard',    label: 'Dashboard',            icon: LayoutDashboard, href: '/admin' },
+  { id: 'pulse',        label: 'Gati Pulse',           icon: Activity,        href: '/pulse', badge: 'LIVE' },
   { id: 'digital-twin', label: 'India Digital Twin',   icon: Map,             href: '/digital-twin' },
   { id: 'intelligence', label: 'AI Intelligence',      icon: Brain,           href: '/intelligence' },
   { id: 'issues',       label: 'Issues & Tasks',       icon: AlertTriangle,   href: '/admin/issues', badge: 5 },
@@ -87,12 +88,18 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                 <span className="font-medium text-sm truncate">{item.label}</span>
               )}
               {!collapsed && item.badge && (
-                <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
+                  item.badge === 'LIVE'
+                    ? 'bg-emerald-500 text-white animate-pulse'
+                    : 'bg-red-500 text-white'
+                }`}>
                   {item.badge}
                 </span>
               )}
               {collapsed && item.badge && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+                <span className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${
+                  item.badge === 'LIVE' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'
+                }`} />
               )}
             </Link>
           )
